@@ -1,0 +1,91 @@
+erDiagram
+    PRODUTO ||--o{ ITEM_ESTRUTURA : "e pai de"
+    PRODUTO ||--o{ ITEM_ESTRUTURA : "e componente de"
+    PRODUTO ||--o{ ROTEIRO_ETAPA : "possui roteiro"
+    PRODUTO ||--o{ ORDEM_PRODUCAO : "e fabricado em"
+    PRODUTO ||--o{ MOVIMENTACAO_ESTOQUE : "movimenta"
+    PRODUTO ||--o{ DEMANDA_PREVISTA : "tem demanda"
+    RECURSO ||--o{ ROTEIRO_ETAPA : "executa"
+    RECURSO ||--o{ PROGRAMACAO : "e alocado em"
+    ORDEM_PRODUCAO ||--o{ PROGRAMACAO : "e programada em"
+    ORDEM_PRODUCAO |o--o{ MOVIMENTACAO_ESTOQUE : "gera"
+    ROTEIRO_ETAPA ||--o{ PROGRAMACAO : "origina"
+    PROGRAMACAO ||--o{ APONTAMENTO : "recebe"
+
+    PRODUTO {
+        INTEGER id PK
+        TEXT codigo UK
+        TEXT nome
+        TEXT descricao
+        TEXT tipo "MATERIA_PRIMA | EM_PROCESSO | ACABADO"
+        TEXT unidade_medida
+        REAL estoque_atual
+        REAL estoque_minimo
+        REAL custo_unitario
+        INTEGER ativo
+    }
+    ITEM_ESTRUTURA {
+        INTEGER id PK
+        INTEGER produto_pai_id FK
+        INTEGER componente_id FK
+        REAL quantidade
+    }
+    RECURSO {
+        INTEGER id PK
+        TEXT nome
+        TEXT tipo "MAQUINA | OPERADOR | LINHA"
+        REAL capacidade_horas_dia
+        INTEGER ativo
+    }
+    ROTEIRO_ETAPA {
+        INTEGER id PK
+        INTEGER produto_id FK
+        INTEGER recurso_id FK
+        INTEGER sequencia
+        TEXT nome
+        REAL tempo_unitario_min
+    }
+    ORDEM_PRODUCAO {
+        INTEGER id PK
+        TEXT numero UK
+        INTEGER produto_id FK
+        REAL quantidade
+        TEXT prazo_entrega
+        TEXT prioridade "BAIXA | MEDIA | ALTA | URGENTE"
+        TEXT status "PLANEJADA | PROGRAMADA | EM_PRODUCAO | CONCLUIDA | CANCELADA"
+        TEXT criada_em
+        TEXT concluida_em
+    }
+    PROGRAMACAO {
+        INTEGER id PK
+        INTEGER ordem_id FK
+        INTEGER etapa_id FK
+        INTEGER recurso_id FK
+        TEXT inicio_previsto
+        TEXT fim_previsto
+        TEXT status "AGENDADA | EM_ANDAMENTO | CONCLUIDA"
+    }
+    APONTAMENTO {
+        INTEGER id PK
+        INTEGER programacao_id FK
+        TEXT data_hora
+        REAL qtd_produzida
+        REAL qtd_defeituosa
+        REAL tempo_gasto_min
+        TEXT observacao
+    }
+    MOVIMENTACAO_ESTOQUE {
+        INTEGER id PK
+        INTEGER produto_id FK
+        INTEGER ordem_id FK "opcional"
+        TEXT tipo "ENTRADA | SAIDA"
+        REAL quantidade
+        TEXT motivo
+        TEXT data_hora
+    }
+    DEMANDA_PREVISTA {
+        INTEGER id PK
+        INTEGER produto_id FK
+        TEXT periodo "AAAA-MM"
+        REAL quantidade
+    }

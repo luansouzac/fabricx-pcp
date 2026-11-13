@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FabricX.Api/FabricX.Api.csproj" />
+    <Project Path="src/FabricX.Application/FabricX.Application.csproj" />
+    <Project Path="src/FabricX.Domain/FabricX.Domain.csproj" />
+    <Project Path="src/FabricX.Infrastructure/FabricX.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FabricX.Tests/FabricX.Tests.csproj" />
+  </Folder>
+</Solution>
