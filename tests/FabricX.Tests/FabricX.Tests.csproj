@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FabricX.Domain\FabricX.Domain.csproj" />
     <ProjectReference Include="..\..\src\FabricX.Application\FabricX.Application.csproj" />
+    <ProjectReference Include="..\..\src\FabricX.Infrastructure\FabricX.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
