@@ -1,1 +1,30 @@
 @FabricX.Api_HostAddress = http://localhost:5168
+
+###
+GET {{FabricX.Api_HostAddress}}/api/produtos
+
+###
+GET {{FabricX.Api_HostAddress}}/api/produtos/estoque-baixo
+
+###
+POST {{FabricX.Api_HostAddress}}/api/produtos
+Content-Type: application/json
+
+{
+  "codigo": "MP-001",
+  "nome": "Chapa de aço",
+  "tipo": "MateriaPrima",
+  "unidadeMedida": "UN",
+  "estoqueAtual": 100,
+  "estoqueMinimo": 20,
+  "custoUnitario": 12.5
+}
+
+###
+POST {{FabricX.Api_HostAddress}}/api/produtos/1/movimentacoes
+Content-Type: application/json
+
+{
+  "tipo": "Saida",
+  "quantidade": 30
+}

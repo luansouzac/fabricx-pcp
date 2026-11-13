@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\database\script.sql" Link="database\script.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FabricX.Application\FabricX.Application.csproj" />
     <ProjectReference Include="..\FabricX.Infrastructure\FabricX.Infrastructure.csproj" />
   </ItemGroup>
