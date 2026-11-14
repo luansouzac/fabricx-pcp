@@ -27,6 +27,9 @@ builder.Services
 
 builder.Services.AddOpenApi();
 
+builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica =>
+    politica.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
@@ -36,7 +39,8 @@ var app = builder.Build();
 using (var escopo = app.Services.CreateScope())
 {
     var contexto = escopo.ServiceProvider.GetRequiredService<AppDbContext>();
-    BancoInicializador.AplicarScriptSeVazio(contexto, Path.Combine(AppContext.BaseDirectory, "database", "script.sql"));
+    BancoInicializador.AplicarScriptSeVazio(contexto, Path.Combine(AppContext.BaseDirectory, "database", "script.sql"),
+        app.Environment.IsDevelopment() ? Path.Combine(AppContext.BaseDirectory, "database", "seed.sql") : null);
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -44,6 +48,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseCors("Desenvolvimento");
 }
 
 app.UseHttpsRedirection();

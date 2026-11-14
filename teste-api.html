@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FabricX - Teste de API</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f4f5; color: #18181b; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .base { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .base input { flex: 1; max-width: 360px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .card { background: #fff; border: 1px solid #d4d4d8; border-radius: 8px; padding: 12px; }
+  .card h2 { font-size: 14px; margin: 0 0 8px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; color: #fff; margin-right: 6px; }
+  .GET { background: #16a34a; } .POST { background: #2563eb; } .PUT { background: #d97706; } .DELETE { background: #dc2626; }
+  label { display: block; font-size: 12px; margin: 6px 0 2px; color: #52525b; }
+  input, select, textarea, button { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid #a1a1aa; border-radius: 6px; box-sizing: border-box; }
+  input, select, textarea { width: 100%; }
+  textarea { font-family: ui-monospace, monospace; min-height: 120px; }
+  button { background: #18181b; color: #fff; cursor: pointer; margin-top: 8px; }
+  button:hover { background: #3f3f46; }
+  .row { display: flex; gap: 8px; } .row > div { flex: 1; }
+  #saida { margin-top: 16px; background: #18181b; color: #e4e4e7; border-radius: 8px; padding: 12px; }
+  #status { font-size: 13px; margin-bottom: 8px; }
+  #status.ok { color: #4ade80; } #status.erro { color: #f87171; }
+  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; max-height: 420px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>FabricX - Teste de API</h1>
+
+<div class="base">
+  <label for="base" style="margin:0">URL base</label>
+  <input id="base" value="http://localhost:5168">
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2><span class="tag GET">GET</span>/api/produtos</h2>
+    <button onclick="chamar('GET', '/api/produtos')">Listar</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag GET">GET</span>/api/produtos/estoque-baixo</h2>
+    <button onclick="chamar('GET', '/api/produtos/estoque-baixo')">Listar estoque baixo</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag GET">GET</span>/api/produtos/{id}</h2>
+    <label>ID</label><input id="get-id" type="number" value="1">
+    <button onclick="chamar('GET', '/api/produtos/' + v('get-id'))">Buscar</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag POST">POST</span>/api/produtos</h2>
+    <div class="row">
+      <div><label>Código</label><input id="c-codigo" value="MP-001"></div>
+      <div><label>Nome</label><input id="c-nome" value="Chapa de aço"></div>
+    </div>
+    <label>Descrição</label><input id="c-desc">
+    <div class="row">
+      <div><label>Tipo</label>
+        <select id="c-tipo"><option>MateriaPrima</option><option>EmProcesso</option><option>Acabado</option></select></div>
+      <div><label>Unidade</label><input id="c-un" value="UN"></div>
+    </div>
+    <div class="row">
+      <div><label>Estoque atual</label><input id="c-est" type="number" value="100"></div>
+      <div><label>Estoque mínimo</label><input id="c-min" type="number" value="20"></div>
+      <div><label>Custo unit.</label><input id="c-custo" type="number" step="0.01" value="12.5"></div>
+    </div>
+    <button onclick="criar()">Criar</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag PUT">PUT</span>/api/produtos/{id}</h2>
+    <label>ID</label><input id="u-id" type="number" value="1">
+    <div class="row">
+      <div><label>Nome</label><input id="u-nome" value="Chapa de aço 2mm"></div>
+      <div><label>Unidade</label><input id="u-un" value="UN"></div>
+    </div>
+    <label>Descrição</label><input id="u-desc">
+    <div class="row">
+      <div><label>Estoque mínimo</label><input id="u-min" type="number" value="20"></div>
+      <div><label>Custo unit.</label><input id="u-custo" type="number" step="0.01" value="13"></div>
+    </div>
+    <button onclick="atualizar()">Atualizar</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag POST">POST</span>/api/produtos/{id}/movimentacoes</h2>
+    <label>ID</label><input id="m-id" type="number" value="1">
+    <div class="row">
+      <div><label>Tipo</label>
+        <select id="m-tipo"><option>Entrada</option><option>Saida</option></select></div>
+      <div><label>Quantidade</label><input id="m-qtd" type="number" value="10"></div>
+    </div>
+    <label>Motivo</label><input id="m-motivo">
+    <button onclick="movimentar()">Movimentar</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="tag DELETE">DELETE</span>/api/produtos/{id}</h2>
+    <label>ID</label><input id="d-id" type="number" value="1">
+    <button onclick="chamar('DELETE', '/api/produtos/' + v('d-id'))">Inativar</button>
+  </div>
+
+  <div class="card">
+    <h2>Requisição livre</h2>
+    <div class="row">
+      <div style="flex:0 0 100px"><select id="l-metodo"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
+      <div><input id="l-caminho" value="/api/produtos"></div>
+    </div>
+    <label>Body JSON</label><textarea id="l-body"></textarea>
+    <button onclick="livre()">Enviar</button>
+  </div>
+</div>
+
+<div id="saida">
+  <div id="status">Aguardando requisição…</div>
+  <pre id="corpo"></pre>
+</div>
+
+<script>
+  const v = id => document.getElementById(id).value;
+  const texto = id => v(id).trim() || null;
+  const numero = id => Number(v(id));
+
+  async function chamar(metodo, caminho, body) {
+    const status = document.getElementById('status');
+    const corpo = document.getElementById('corpo');
+    const url = v('base').replace(/\/$/, '') + caminho;
+    status.className = '';
+    status.textContent = metodo + ' ' + url + ' …';
+    corpo.textContent = '';
+    const inicio = performance.now();
+    try {
+      const opcoes = { method: metodo, headers: {} };
+      if (body !== undefined) {
+        opcoes.headers['Content-Type'] = 'application/json';
+        opcoes.body = typeof body === 'string' ? body : JSON.stringify(body);
+      }
+      const res = await fetch(url, opcoes);
+      const bruto = await res.text();
+      let saida = bruto;
+      try { saida = JSON.stringify(JSON.parse(bruto), null, 2); } catch {}
+      status.className = res.ok ? 'ok' : 'erro';
+      status.textContent = metodo + ' ' + url + ' → ' + res.status + ' ' + res.statusText +
+        ' (' + Math.round(performance.now() - inicio) + ' ms)';
+      corpo.textContent = saida;
+    } catch (e) {
+      status.className = 'erro';
+      status.textContent = 'Falha de rede/CORS: ' + e.message + ' (a API está rodando em ' + v('base') + '?)';
+    }
+  }
+
+  function criar() {
+    chamar('POST', '/api/produtos', {
+      codigo: v('c-codigo'), nome: v('c-nome'), descricao: texto('c-desc'),
+      tipo: v('c-tipo'), unidadeMedida: v('c-un'),
+      estoqueAtual: numero('c-est'), estoqueMinimo: numero('c-min'), custoUnitario: numero('c-custo')
+    });
+  }
+
+  function atualizar() {
+    chamar('PUT', '/api/produtos/' + v('u-id'), {
+      nome: v('u-nome'), descricao: texto('u-desc'), unidadeMedida: v('u-un'),
+      estoqueMinimo: numero('u-min'), custoUnitario: numero('u-custo')
+    });
+  }
+
+  function movimentar() {
+    chamar('POST', '/api/produtos/' + v('m-id') + '/movimentacoes', {
+      tipo: v('m-tipo'), quantidade: numero('m-qtd'), motivo: texto('m-motivo')
+    });
+  }
+
+  function livre() {
+    const body = v('l-body').trim();
+    chamar(v('l-metodo'), v('l-caminho'), body ? body : undefined);
+  }
+</script>
+</body>
+</html>

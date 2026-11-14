@@ -4,7 +4,7 @@ namespace FabricX.Infrastructure.Persistence;
 
 public static class BancoInicializador
 {
-    public static void AplicarScriptSeVazio(AppDbContext contexto, string caminhoScript)
+    public static void AplicarScriptSeVazio(AppDbContext contexto, string caminhoScript, string? caminhoSeed = null)
     {
         var conexao = contexto.Database.GetDbConnection();
         conexao.Open();
@@ -20,6 +20,13 @@ public static class BancoInicializador
             using var criacao = conexao.CreateCommand();
             criacao.CommandText = File.ReadAllText(caminhoScript);
             criacao.ExecuteNonQuery();
+
+            if (caminhoSeed is not null && File.Exists(caminhoSeed))
+            {
+                using var carga = conexao.CreateCommand();
+                carga.CommandText = File.ReadAllText(caminhoSeed);
+                carga.ExecuteNonQuery();
+            }
         }
         finally
         {

@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Content Include="..\..\database\script.sql" Link="database\script.sql" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\database\seed.sql" Link="database\seed.sql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
