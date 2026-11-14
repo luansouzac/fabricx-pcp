@@ -20,18 +20,18 @@ Use o perfil `http`. O perfil `https` exige o certificado de desenvolvimento (`d
 
 ## Banco de dados e seeder
 
-O banco é o arquivo `fabricx.db`, criado na pasta de onde a API é executada. Na primeira execução a API cria as tabelas com `database/script.sql`. Quando o ambiente é Development, ela também carrega os dados de exemplo de `database/seed.sql`.
+O banco é o arquivo `src/FabricX.Api/fabricx.db`, criado na primeira execução (está no `.gitignore`). Na primeira execução a API cria as tabelas com `database/script.sql`. Quando o ambiente é Development, ela também carrega os dados de exemplo de `database/seed.sql`.
 
 O seed só roda quando o banco é criado do zero. Ele traz 7 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 4 recursos e movimentações iniciais.
 
 Para resetar o banco e recarregar o seed:
 
 ```bash
-rm fabricx.db
+rm src/FabricX.Api/fabricx.db
 dotnet run --project src/FabricX.Api --launch-profile http
 ```
 
-Pare a API antes de apagar o arquivo. Se você rodou a API de dentro de `src/FabricX.Api`, o `fabricx.db` está nessa pasta.
+Pare a API antes de apagar o arquivo.
 
 ## Testar os endpoints
 
