@@ -4,9 +4,27 @@ API de PCP (Planejamento e Controle da Produção) em C# / .NET 10, com Arquitet
 
 ## Requisitos
 
+- [Docker](https://www.docker.com/products/docker-desktop) (recomendado, garante a mesma versão para todo o grupo), ou
 - [.NET SDK 10](https://dotnet.microsoft.com/download)
 
-## Rodar a API
+## Rodar com Docker
+
+```bash
+docker compose up --build
+```
+
+A API sobe em `http://localhost:5168` já com o seed carregado. O banco fica no volume `fabricx-data` e persiste entre execuções.
+
+```bash
+docker compose down        # para o container, mantém os dados
+docker compose down -v     # para e apaga o volume (o próximo up recarrega o seed)
+```
+
+Se o build falhar com `unexpected EOF` no `dotnet restore`, é instabilidade de rede ao baixar pacotes NuGet. Rode o comando de novo.
+
+Os testes (`dotnet test`) e o desenvolvimento no dia a dia continuam usando o SDK local.
+
+## Rodar a API sem Docker
 
 Na raiz do projeto:
 
@@ -76,6 +94,7 @@ src/
   FabricX.Infrastructure  EF Core, SQLite e repositórios
   FabricX.Api             controllers, middleware e Program.cs
 tests/FabricX.Tests
+Dockerfile, docker-compose.yml
 database/                 script.sql (schema) e seed.sql (dados de exemplo)
 docs/                     documentação do domínio
 ```

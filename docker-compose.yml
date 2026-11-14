@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "5168:8080"
+    volumes:
+      - fabricx-data:/data
+
+volumes:
+  fabricx-data:
