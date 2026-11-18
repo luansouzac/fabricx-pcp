@@ -2,6 +2,11 @@
 tema: ASP.NET Core, EF Core e estrutura de solução
 fontes:
   - AspNET_Core.pdf (capítulos 1 a 3)
+  - https://dutrapaulovm.github.io/gymnasium-code-42/dotnet/tutorial-basics/introducao/
+  - https://learn.microsoft.com/pt-br/ef/core/ e https://learn.microsoft.com/pt-br/ef/
+  - https://learn.microsoft.com/pt-br/ef/core/dbcontext-configuration/
+  - https://learn.microsoft.com/pt-br/ef/efcore-and-ef6/
+  - https://entityframework.net/ (terceiro, comercial)
 aplicado-em: Infrastructure (EF Core, migrations), Api (Program.cs), estrutura da solução
 relacionado: [injecao-de-dependencia.md, arquiteturas.md]
 ---
@@ -104,6 +109,59 @@ O tutorial tem duas ressalvas internas: o controller faz `new AppDbContext()` (m
 Solução `ControleAluno` com três projetos: `Web` (interface), `Api` (endpoints REST) e `Data` (EF Core). Referências: Api → Data e Web → Data. Pacotes do EF Core no `Data` e na `Api`. Depois: modelo `Aluno`, `AppDbContext` com construtor de opções, `AddDbContext` com `UseSqlite("Data Source=controlealunos.db")`, migration `CriarTabelaAlunos`, endpoint `app.MapGet("/alunos", ...)`.
 
 O material **não** inclui uma camada de Domain ou Application nesse tutorial. Ela vem das aulas de Arquitetura Limpa. O FabricX combina as duas fontes.
+
+## Fontes online adicionais
+
+### Site do professor (Gymnasium Code 42)
+
+https://dutrapaulovm.github.io/gymnasium-code-42/dotnet/tutorial-basics/introducao/ é a versão web do mesmo tutorial do PDF: projeto `dotnet new web` do zero, pastas `Models` e `Data`, pacotes do EF Core, `AppDbContext`, SQLite com `"Data Source=meubanco.db"`, migration `CriarTabelaProdutos` e `app.MapGet("/produtos", async (AppDbContext db) => await db.Produtos.ToListAsync())`. Pontos novos em relação ao PDF:
+
+- pede .NET SDK "8 ou superior" e VS Code com C# Dev Kit;
+- SQLite indicado para "aplicações locais ou de pequeno porte";
+- migrations aplicadas de forma controlada, "sem perder dados";
+- a seção de Views só explica estrutura (`Views/Shared/_Layout.cshtml` etc.) e anuncia que as Views virão depois. Não há controller nem view completos na página;
+- tem inconsistências internas, como o PDF: cita `dotnet ef dbcontext list` num ponto e `info` noutro, e a tabela Pomelo x Oracle não traz fonte. O exemplo de MySQL tem senha em texto no código, o que o FabricX não deve imitar (connection string vem de configuração).
+
+Links irmãos listados na barra lateral: `dotnet/intro` e `tutorials`. Não lidos.
+
+### Documentação oficial do EF Core
+
+Fonte: https://learn.microsoft.com/pt-br/ef/core/ (página de visão geral, tradução automática, atualizada em 2026-03-27).
+
+- EF Core é a versão leve, extensível, de código aberto e multiplataforma do Entity Framework, um O/RM.
+- Modelo = classes de entidade + `DbContext` (sessão com o banco). Três caminhos: gerar a partir de banco existente, codificar à mão, ou criar o banco pelo modelo com Migrations.
+- A página tem uma seção de considerações gerais (testes de integração, desempenho e carga, logs, revisão de segurança, planejar migrações em produção) e um aviso: em SQL Server, `nvarchar(max)` e `decimal(18, 2)` são os padrões do EF e "raramente são os melhores tipos" para produção. No FabricX o esquema vem do `database/script.sql`, então os tipos são decididos lá, não pelo EF.
+- O exemplo da página usa `OnConfiguring` com string fixa, o mesmo que o professor marca como pouco adequado para aplicação real.
+- Seções que existem e não foram lidas: modelagem, provedores, consultas, salvar dados, migrations, desempenho.
+
+### Tempo de vida do DbContext
+
+Fonte: https://learn.microsoft.com/pt-br/ef/core/dbcontext-configuration/ (lida por completo, tradução automática).
+
+- O `DbContext` "foi projetado para ser usado em uma *única* unidade de trabalho": criar, rastrear entidades, alterar, `SaveChanges`, descartar. Em aplicação web, "cada solicitação HTTP corresponde a uma única unidade de trabalho". Por isso o tempo de vida é curto.
+- `AddDbContext` registra o contexto com escopo. Exige construtor público que recebe `DbContextOptions<T>` e repassa à base. É o que `DependencyInjection.cs` do FabricX faz.
+- "DbContext não é thread-safe. Não compartilhe contextos entre threads." Não há suporte a várias operações simultâneas na mesma instância, nem consultas assíncronas em paralelo: dar `await` antes de continuar. Se o EF detectar, lança `InvalidOperationException` ("Uma segunda operação foi iniciada nesse contexto antes de uma operação anterior ser concluída"). Se não detectar, a página fala em "comportamento indefinido, falhas de aplicativo e corrupção de dados". Compartilhar o contexto por requisição é seguro no ASP.NET Core porque cada requisição tem escopo próprio.
+- Uma `InvalidOperationException` do EF "pode colocar o contexto em um estado irrecuperável".
+- `OnConfiguring` "é sempre chamado", mesmo com `AddDbContext`, e pode complementá-lo. Cada contexto usa um único provedor, e configurar outro provedor não remove o anterior.
+- `AddDbContextFactory` serve para casos sem escopo adequado (Blazor) ou várias unidades de trabalho na mesma requisição. Quem cria o contexto pela fábrica precisa descartá-lo.
+- `EnableSensitiveDataLogging` põe dados da aplicação em logs e exceções. O provedor em memória "não foi projetado para ser usado em produção".
+- Não cobre: `AddDbContextPool` (o termo não aparece), tempo de vida do serviço de fábrica, criação em tempo de design.
+
+### EF Core x EF6
+
+Fonte: https://learn.microsoft.com/pt-br/ef/efcore-and-ef6/ (lida por completo, tradução automática).
+
+- Recomendação oficial: "Use o EF Core no .NET Core para todos os novos aplicativos, a menos que o aplicativo precise de algo que só tenha suporte no .NET Framework."
+- EF6 é "um produto estável e compatível, mas não está mais sendo desenvolvido ativamente". Continuar nele só se o código de acesso a dados estiver estável e sem previsão de novos recursos.
+- Só no EF Core: filtros de consulta global, pool de DbContext, conversões de valor, tipos sem chave, provedor Cosmos DB. Só no EF6: designer e EDMX, assistente "Criar modelo a partir do banco de dados" do Visual Studio, Entity SQL.
+- "O EF Core não é uma substituição direta para o EF6." Migrar exige mudanças. Ganho de desempenho não é garantido: "nem todos os cenários são mais rápidos".
+- Não cobre passos de migração (remete a `efcore-and-ef6/porting/`, não lida) nem a versão atual do EF Core. O FabricX usa EF Core, sem nenhuma decisão a tomar aqui.
+
+Hub https://learn.microsoft.com/pt-br/ef/: a página **não** compara EF Core com EF6, apenas aponta para a página acima. Lista SQLite e o provedor em memória (para testes) entre os suportados. Provedores de PostgreSQL, MySQL/MariaDB, MongoDB e Firebird apontam para sites de terceiros.
+
+### entityframework.net
+
+Não é da Microsoft. O rodapé diz "Documentation made by ZZZ Projects & .NET Community" e o site promove produtos da ZZZ Projects (Entity Framework Extensions com "Try for free now", Dapper Plus, entre outros), então tem componente comercial. A página inicial só traz títulos e links (modelagem, `/include`, `/as-no-tracking`, `/async`, `/fastest-way-to-insert`, migrations). A única frase conceitual é "Entity Framework is an ORM made by Microsoft". O título diz EF 6 e o texto fala de EF Core, sem esclarecer a versão. Uso: no máximo como índice de artigos. Não adotar como fonte de regra nem de pacote.
 
 ## Namespaces
 

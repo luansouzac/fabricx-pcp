@@ -11,8 +11,12 @@ Destilado dos PDFs e do diagrama da disciplina. Cada arquivo traz a fonte no cab
 | [repositorio-dao-service.md](repositorio-dao-service.md) | Criar contrato e implementação de persistência, decidir o que vai no Service | Repository e DAO, Implementação do Repository, Apostila 3.4 e 3.5 |
 | [injecao-de-dependencia.md](injecao-de-dependencia.md) | Registrar serviços, escolher tempo de vida | Injeção de Dependência, SOLID |
 | [aspnet-core-ef.md](aspnet-core-ef.md) | Configurar EF Core, solução, projetos, migrations | ASP.NET Core |
+| [aspnet-core-web-api.md](aspnet-core-web-api.md) | Criar controller, tratar erro HTTP, documentar OpenAPI | Documentação oficial Microsoft (Web API, Swagger, hub ASP.NET Core) |
+| [async-await.md](async-await.md) | Escrever método assíncrono, revisar `.Result` e `async void` | Code Maze |
 | [engenharia-de-software.md](engenharia-de-software.md) | Documentar o projeto, escrever requisitos e regras de negócio | Apostila, exercícios |
 | [mapa-conceito-codigo.md](mapa-conceito-codigo.md) | Saber onde cada conceito vive no FabricX e onde o projeto diverge do material | todos |
+
+Hierarquia das fontes: material do professor (PDFs e site dutrapaulovm.github.io) > documentação oficial da Microsoft > blogs. `aspnet-core-web-api`, `async-await` e as seções "Complemento" e "Fontes online" de `injecao-de-dependencia` e `aspnet-core-ef` vêm de links externos e dizem o que cada fonte não cobre.
 
 Ordem sugerida para quem chega agora: `arquiteturas` → `arquitetura-limpa` → `mapa-conceito-codigo`. O resto é consulta.
 
