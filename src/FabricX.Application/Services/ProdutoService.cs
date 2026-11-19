@@ -2,6 +2,7 @@ using FabricX.Application.DTOs.Produtos;
 using FabricX.Application.Exceptions;
 using FabricX.Application.Interfaces;
 using FabricX.Domain.Entities;
+using FabricX.Domain.Enums;
 using FabricX.Domain.Exceptions;
 
 namespace FabricX.Application.Services;
@@ -9,21 +10,23 @@ namespace FabricX.Application.Services;
 public class ProdutoService : IProdutoService
 {
     private readonly IProdutoRepository _repositorio;
+    private readonly IMovimentacaoEstoqueRepository _movimentacoes;
 
-    public ProdutoService(IProdutoRepository repositorio)
+    public ProdutoService(IProdutoRepository repositorio, IMovimentacaoEstoqueRepository movimentacoes)
     {
         _repositorio = repositorio;
+        _movimentacoes = movimentacoes;
     }
 
-    public async Task<IReadOnlyList<ProdutoDto>> ListarAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ProdutoDto>> ListarAsync(TipoProduto? tipo, CancellationToken cancellationToken)
     {
-        var produtos = await _repositorio.ListarAsync(cancellationToken);
+        var produtos = await _repositorio.ListarAsync(tipo, cancellationToken);
         return produtos.Select(ProdutoDto.De).ToList();
     }
 
     public async Task<IReadOnlyList<ProdutoDto>> ListarComEstoqueBaixoAsync(CancellationToken cancellationToken)
     {
-        var produtos = await _repositorio.ListarAsync(cancellationToken);
+        var produtos = await _repositorio.ListarAsync(null, cancellationToken);
         return produtos
             .Where(p => p.Ativo && p.EstoqueAbaixoDoMinimo)
             .Select(ProdutoDto.De)
@@ -73,8 +76,16 @@ public class ProdutoService : IProdutoService
 
         produto.Movimentar(dto.Tipo, dto.Quantidade);
 
-        await _repositorio.AtualizarAsync(produto, cancellationToken);
+        await _movimentacoes.AdicionarAsync(new MovimentacaoEstoque(produto.Id, dto.Tipo, dto.Quantidade, dto.Motivo), cancellationToken);
         return ProdutoDto.De(produto);
+    }
+
+    public async Task<IReadOnlyList<MovimentacaoEstoqueDto>> ListarMovimentacoesAsync(int id, CancellationToken cancellationToken)
+    {
+        await ObterOuFalharAsync(id, cancellationToken);
+
+        var movimentacoes = await _movimentacoes.ListarPorProdutoAsync(id, cancellationToken);
+        return movimentacoes.Select(MovimentacaoEstoqueDto.De).ToList();
     }
 
     public async Task<ProdutoDto> InativarAsync(int id, CancellationToken cancellationToken)

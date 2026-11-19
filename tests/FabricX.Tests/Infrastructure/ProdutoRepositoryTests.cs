@@ -99,7 +99,7 @@ public class ProdutoRepositoryTests : IDisposable
         await repositorio.AdicionarAsync(NovoProduto("P2", "Zinco"), Ct);
         await repositorio.AdicionarAsync(NovoProduto("P1", "Alumínio"), Ct);
 
-        var lista = await repositorio.ListarAsync(Ct);
+        var lista = await repositorio.ListarAsync(null, Ct);
 
         Assert.Equal(["Alumínio", "Zinco"], lista.Select(p => p.Nome));
     }
@@ -136,5 +136,18 @@ public class ProdutoRepositoryTests : IDisposable
 
         await using var outro = _banco.CriarContexto();
         await Assert.ThrowsAsync<DbUpdateException>(() => new ProdutoRepository(outro).AdicionarAsync(NovoProduto("DUP"), Ct));
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorTipo()
+    {
+        await using var contexto = _banco.CriarContexto();
+        var repositorio = new ProdutoRepository(contexto);
+        await repositorio.AdicionarAsync(NovoProduto("P1", "Alumínio", TipoProduto.MateriaPrima), Ct);
+        await repositorio.AdicionarAsync(NovoProduto("P2", "Garrafa", TipoProduto.Acabado), Ct);
+
+        var lista = await repositorio.ListarAsync(TipoProduto.Acabado, Ct);
+
+        Assert.Equal(["Garrafa"], lista.Select(p => p.Nome));
     }
 }
