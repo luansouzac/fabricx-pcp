@@ -2,6 +2,12 @@
 
 FabricX é uma API de PCP (Planejamento e Controle da Produção) em C# / .NET 10 com Arquitetura Limpa (Domain, Application, Infrastructure, Api). Banco SQLite. Toda resposta HTTP usa `WebResponse<T>`. Documentação em `docs/`.
 
+## Referência da disciplina
+
+- Conceitos e arquiteturas do professor (Clean Architecture, SOLID, Repository, DI, requisitos) estão em `docs/conceitos/`. Comece por `docs/conceitos/README.md`.
+- Antes de criar camada, interface ou padrão novo, consulte `docs/conceitos/quando-aplicar-e-overengineering.md`.
+- Em conflito entre `docs/conceitos/` e este arquivo, este arquivo vence.
+
 ## Comentários
 
 - Não escreva comentários por padrão. Nomes claros de classes, métodos e variáveis substituem comentário.
