@@ -33,6 +33,7 @@ builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
+builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 
 var app = builder.Build();
 
