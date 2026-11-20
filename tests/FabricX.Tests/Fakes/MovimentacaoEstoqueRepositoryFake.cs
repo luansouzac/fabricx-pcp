@@ -16,4 +16,10 @@ public class MovimentacaoEstoqueRepositoryFake : IMovimentacaoEstoqueRepository
         Registradas.Add(movimentacao);
         return Task.CompletedTask;
     }
+
+    public Task AdicionarVariasAsync(IReadOnlyCollection<MovimentacaoEstoque> movimentacoes, CancellationToken cancellationToken)
+    {
+        Registradas.AddRange(movimentacoes);
+        return Task.CompletedTask;
+    }
 }

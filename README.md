@@ -72,6 +72,12 @@ Endpoints atuais:
 | POST | `/api/produtos/{id}/estrutura` | Adiciona componente (recusa par repetido e ciclo) |
 | PUT | `/api/produtos/{id}/estrutura/{componenteId}` | Altera a quantidade do componente |
 | DELETE | `/api/produtos/{id}/estrutura/{componenteId}` | Remove o componente |
+| GET | `/api/ordens-producao?status=` | Lista ordens, com filtro opcional por status |
+| GET | `/api/ordens-producao/{id}` | Busca ordem por id |
+| POST | `/api/ordens-producao` | Cria ordem (número gerado, valida saldo dos componentes) |
+| PUT | `/api/ordens-producao/{id}` | Altera quantidade, prazo e prioridade de ordem planejada |
+| POST | `/api/ordens-producao/{id}/avancar` | Avança o status (ao iniciar baixa os componentes, ao concluir dá entrada no acabado) |
+| POST | `/api/ordens-producao/{id}/cancelar` | Cancela ordem planejada ou programada |
 | DELETE | `/api/produtos/{id}` | Inativa produto |
 
 Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode`.

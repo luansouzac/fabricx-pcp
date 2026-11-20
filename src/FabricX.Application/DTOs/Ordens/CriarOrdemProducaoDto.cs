@@ -1,0 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+using FabricX.Domain.Enums;
+
+namespace FabricX.Application.DTOs.Ordens;
+
+public class CriarOrdemProducaoDto
+{
+    [Range(1, int.MaxValue)]
+    public int ProdutoId { get; set; }
+
+    [Range(double.Epsilon, double.MaxValue)]
+    public double Quantidade { get; set; }
+
+    [Required]
+    public DateOnly? PrazoEntrega { get; set; }
+
+    [EnumDataType(typeof(Prioridade))]
+    public Prioridade Prioridade { get; set; } = Prioridade.Media;
+}

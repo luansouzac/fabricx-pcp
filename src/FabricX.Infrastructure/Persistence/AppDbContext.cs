@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Produto> Produtos => Set<Produto>();
     public DbSet<MovimentacaoEstoque> MovimentacoesEstoque => Set<MovimentacaoEstoque>();
     public DbSet<ItemEstrutura> ItensEstrutura => Set<ItemEstrutura>();
+    public DbSet<OrdemProducao> OrdensProducao => Set<OrdemProducao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

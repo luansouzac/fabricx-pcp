@@ -116,11 +116,19 @@ public class OrdemProducaoTests
         Assert.Throws<DomainException>(() => ordem.Avancar());
     }
 
+    [Fact]
+    public void Cancelar_OrdemEmProducao_LancaDomainException()
+    {
+        var ordem = CriarOrdemNoStatus(StatusOrdem.EmProducao);
+
+        Assert.Throws<DomainException>(() => ordem.Cancelar());
+        Assert.Equal(StatusOrdem.EmProducao, ordem.Status);
+    }
+
     [Theory]
     [InlineData(StatusOrdem.Planejada)]
     [InlineData(StatusOrdem.Programada)]
-    [InlineData(StatusOrdem.EmProducao)]
-    public void Cancelar_AntesDeConcluir_Permitido(StatusOrdem status)
+    public void Cancelar_AntesDeIniciarProducao_Permitido(StatusOrdem status)
     {
         var ordem = CriarOrdemNoStatus(status);
 
