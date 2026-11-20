@@ -35,6 +35,7 @@ builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("De
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
+builder.Services.AddScoped<IIntegracaoService, IntegracaoService>();
 
 var app = builder.Build();
 
