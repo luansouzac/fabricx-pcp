@@ -40,7 +40,9 @@ Use o perfil `http`. O perfil `https` exige o certificado de desenvolvimento (`d
 
 O banco é o arquivo `src/FabricX.Api/fabricx.db`, criado na primeira execução (está no `.gitignore`). Na primeira execução a API cria as tabelas com `database/script.sql`. Quando o ambiente é Development, ela também carrega os dados de exemplo de `database/seed.sql`.
 
-O seed só roda quando o banco é criado do zero. Ele traz 7 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 4 recursos e movimentações iniciais.
+O seed só roda quando o banco é criado do zero. Ele traz 11 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 6 recursos, roteiros e movimentações iniciais. O exemplo da garrafa tem três níveis: tampinha e garrafa formam a garrafa d'água (`EP-003`, montadora, ciclo de 2 min para 10 unidades), e 6 garrafas d'água formam o kit (`PA-003`, linha de embalagem, 2 min por unidade).
+
+O script e o seed só rodam quando o banco é criado do zero. Quem já tem o `fabricx.db`, ou o volume `fabricx-data` do Docker, precisa recriá-lo para receber a coluna nova do roteiro e o exemplo da garrafa.
 
 Para resetar o banco e recarregar o seed:
 
