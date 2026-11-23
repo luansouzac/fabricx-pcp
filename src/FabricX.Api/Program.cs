@@ -1,10 +1,12 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using FabricX.Api.Common;
+using FabricX.Api.Filters;
 using FabricX.Api.Middleware;
 using FabricX.Application.Interfaces;
 using FabricX.Application.Services;
 using FabricX.Infrastructure;
+using FabricX.Infrastructure.Cache;
 using FabricX.Infrastructure.Persistence;
 using FabricX.Infrastructure.Seguranca;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddControllers()
+    .AddControllers(opcoes => opcoes.Filters.Add<InvalidarCacheAposEscritaFilter>())
     .AddJsonOptions(opcoes => opcoes.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .ConfigureApiBehaviorOptions(opcoes =>
     {
@@ -30,6 +32,8 @@ builder.Services
             return new BadRequestObjectResult(resposta);
         };
     });
+
+builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.Secao));
 
 builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection(JwtOptions.Secao))

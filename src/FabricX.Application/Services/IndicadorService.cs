@@ -14,22 +14,32 @@ public class IndicadorService : IIndicadorService
     private readonly IOrdemProducaoRepository _ordens;
     private readonly IRoteiroEtapaRepository _etapas;
     private readonly IProdutoRepository _produtos;
+    private readonly ICacheDeConsultas _cache;
 
     public IndicadorService(
         IApontamentoRepository apontamentos,
         IProgramacaoRepository programacoes,
         IOrdemProducaoRepository ordens,
         IRoteiroEtapaRepository etapas,
-        IProdutoRepository produtos)
+        IProdutoRepository produtos,
+        ICacheDeConsultas cache)
     {
         _apontamentos = apontamentos;
         _programacoes = programacoes;
         _ordens = ordens;
         _etapas = etapas;
         _produtos = produtos;
+        _cache = cache;
     }
 
-    public async Task<IndicadoresDto> CalcularAsync(DateOnly? de, DateOnly? ate, int? produtoId, int? recursoId, CancellationToken cancellationToken)
+    public Task<IndicadoresDto> CalcularAsync(DateOnly? de, DateOnly? ate, int? produtoId, int? recursoId, CancellationToken cancellationToken) =>
+        _cache.ObterOuBuscarAsync($"indicadores:{de:yyyy-MM-dd}:{ate:yyyy-MM-dd}:{produtoId}:{recursoId}",
+            () => CalcularNaFonteAsync(de, ate, produtoId, recursoId, cancellationToken));
+
+    public Task<ResumoDto> ObterResumoAsync(CancellationToken cancellationToken) =>
+        _cache.ObterOuBuscarAsync("indicadores:resumo", () => ObterResumoNaFonteAsync(cancellationToken));
+
+    private async Task<IndicadoresDto> CalcularNaFonteAsync(DateOnly? de, DateOnly? ate, int? produtoId, int? recursoId, CancellationToken cancellationToken)
     {
         var inicio = de?.ToDateTime(TimeOnly.MinValue);
         var fim = ate?.AddDays(1).ToDateTime(TimeOnly.MinValue);
@@ -72,7 +82,7 @@ public class IndicadorService : IIndicadorService
         };
     }
 
-    public async Task<ResumoDto> ObterResumoAsync(CancellationToken cancellationToken)
+    private async Task<ResumoDto> ObterResumoNaFonteAsync(CancellationToken cancellationToken)
     {
         var ordens = await _ordens.ListarAsync(null, cancellationToken);
         var produtos = await _produtos.ListarAsync(null, cancellationToken);
@@ -83,7 +93,7 @@ public class IndicadorService : IIndicadorService
                 .Select(s => new OrdensPorStatusDto { Status = s, Quantidade = ordens.Count(o => o.Status == s) })
                 .ToList(),
             ProdutosComEstoqueBaixo = produtos.Where(p => p.Ativo && p.EstoqueAbaixoDoMinimo).Select(ProdutoDto.De).ToList(),
-            Indicadores = await CalcularAsync(null, null, null, null, cancellationToken)
+            Indicadores = await CalcularNaFonteAsync(null, null, null, null, cancellationToken)
         };
     }
 

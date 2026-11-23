@@ -1,4 +1,5 @@
 using FabricX.Application.Interfaces;
+using FabricX.Infrastructure.Cache;
 using FabricX.Infrastructure.Integracoes;
 using FabricX.Infrastructure.Persistence;
 using FabricX.Infrastructure.Repositories;
@@ -27,6 +28,8 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddSingleton<ISenhaHasher, SenhaHasherPbkdf2>();
         services.AddSingleton<IGeradorDeToken, GeradorDeTokenJwt>();
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheDeConsultas, CacheDeConsultasMemoria>();
         return services;
     }
 }

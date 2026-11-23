@@ -84,7 +84,8 @@ public class SeedTests : IDisposable
             new FabricX.Infrastructure.Repositories.RecursoRepository(contexto),
             new FabricX.Infrastructure.Repositories.ProgramacaoRepository(contexto),
             new FabricX.Infrastructure.Repositories.DemandaPrevistaRepository(contexto),
-            new FabricX.Infrastructure.Repositories.RoteiroEtapaRepository(contexto));
+            new FabricX.Infrastructure.Repositories.RoteiroEtapaRepository(contexto),
+            new SemCacheFake());
 
         var capacidade = await servico.CalcularAsync("2026-12", Ct);
 

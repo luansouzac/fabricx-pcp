@@ -29,7 +29,7 @@ public class ApontamentoEIndicadorServiceTests
     {
         _apontamentos = new ApontamentoRepositoryFake(_programacoes);
         _service = new ApontamentoService(_apontamentos, _programacoes, _ordens);
-        _indicadores = new IndicadorService(_apontamentos, _programacoes, _ordens, _etapas, _produtos);
+        _indicadores = new IndicadorService(_apontamentos, _programacoes, _ordens, _etapas, _produtos, new SemCacheFake());
     }
 
     private async Task PrepararAsync(double quantidade = 60)
