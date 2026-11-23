@@ -33,6 +33,16 @@ Passo a passo no Swagger UI:
 
 O mesmo fluxo é executado de forma automatizada em `tests/FabricX.Tests/Api/ProdutosControllerTests.cs`.
 
+## Teste de aceitação: programação e desempenho
+
+Com o seed carregado (garrafa d'água na Montadora, kit na Linha de embalagem):
+
+1. Criar uma ordem de 60 garrafas d'água (`EP-003`) e programar a etapa em `POST /api/ordens-producao/{id}/programacao`. O fim volta calculado: 6 ciclos de 2 min, ou seja 12 minutos.
+2. Programar uma segunda ordem no mesmo horário da Montadora: a API responde 400 com "já está ocupado".
+3. Apontar a produção em `POST /api/programacao/{id}/apontamentos`. Ao somar 60 unidades produzidas a programação fica concluída.
+4. Consultar `GET /api/indicadores` e `GET /api/indicadores/resumo`.
+5. Consultar `GET /api/capacidade?periodo=2026-12`: a Montadora aparece ociosa e a Linha de embalagem em gargalo, com a demanda do seed.
+
 ## Limitações conhecidas
 
 | Limitação | Efeito |

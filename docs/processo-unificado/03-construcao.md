@@ -1,6 +1,6 @@
 # Construção
 
-Registra o que foi implementado por iteração, os testes e as decisões de design. O estado abaixo é o do repositório na data de escrita e deve ser atualizado na revisão final (issue #17).
+Registra o que foi implementado por iteração, os testes e as decisões de design. Todos os módulos do ETS estão implementados; o ERP/SGQ e a capacidade são os opcionais.
 
 ## Módulos por iteração
 
@@ -10,9 +10,12 @@ Registra o que foi implementado por iteração, os testes e as decisões de desi
 | 1 | Produtos e estoque | `/api/produtos`, `/api/produtos/{id}/movimentacoes` (POST e GET), filtro `?tipo=` | feito |
 | 1 | Estrutura de produto | `/api/produtos/{id}/estrutura` (GET, POST, PUT e DELETE por componente) | feito |
 | 1 | Ordens de produção | `/api/ordens-producao` (GET, POST, PUT), `/{id}/avancar`, `/{id}/cancelar` | feito |
-| 2 | Recursos, roteiro, DDL com paralelismo | a definir nas issues #1, #10 e #11 | em andamento |
-| 3 | Programação, apontamentos, indicadores | a definir nas issues #12 e #13 | planejado |
-| 4 | Capacidade e ERP/SGQ | a definir nas issues #14 e #15 | planejado, opcional |
+| 2 | Recursos | `/api/recursos` (GET, POST, PUT e DELETE, que inativa) | feito |
+| 2 | Roteiro de etapas com paralelismo | `/api/produtos/{id}/roteiro` (GET, POST, PUT e DELETE por etapa) | feito |
+| 3 | Programação | `/api/ordens-producao/{id}/programacao` (POST e GET), `/api/programacao` (cronograma), `/api/programacao/{id}` (PUT e DELETE) | feito |
+| 3 | Apontamentos e indicadores | `/api/programacao/{id}/apontamentos`, `/api/ordens-producao/{id}/apontamentos`, `/api/indicadores` e `/api/indicadores/resumo` | feito |
+| 4 | Demanda prevista e capacidade | `/api/demanda-prevista` e `/api/capacidade?periodo=AAAA-MM` | feito, opcional |
+| 4 | Integração ERP/SGQ simulada | `/api/integracoes/erp/pedidos` e `/api/integracoes/sgq/resultados` | feito, opcional |
 
 ## Fluxo da ordem de produção
 
@@ -28,13 +31,20 @@ Planejada ──► Programada ──► Em produção ──► Concluída
 
 Exemplo de aceitação coberto por teste: ordem de 60 garrafas d'água, com 1 tampinha e 1 garrafa por unidade. Ao concluir, tampinhas e garrafas caem 60 e as garrafas d'água sobem 60.
 
+## Programação, apontamento e indicadores
+
+- **Programação:** o início é informado e o fim é calculado por `RoteiroEtapa.CalcularDuracaoMinutos` (teto da quantidade ÷ unidades por ciclo, vezes o tempo de ciclo). As regras ficam em `RegrasDeProgramacao`: cada etapa só começa depois do fim da anterior, sem sobreposição no mesmo recurso e dentro da capacidade diária (intervalo que cruza a meia-noite conta em cada dia). Ao programar a última etapa do roteiro, a ordem passa de Planejada para Programada.
+- **Apontamento:** o primeiro apontamento coloca a programação em andamento; quando a soma produzida atinge a quantidade da ordem, ela é concluída. Apontamento e mudança de status são gravados juntos.
+- **Indicadores** (`CalculadoraDeIndicadores`): qualidade = defeituosas ÷ (produzidas + defeituosas); eficiência = tempo padrão ÷ tempo gasto; produtividade = produzidas por hora apontada; cumprimento de prazo = fração das ordens concluídas no prazo. Sem dados o indicador volta nulo.
+- **Capacidade** (`CalculadoraDeCapacidade`): por recurso, capacidade do mês, horas programadas e horas necessárias para a demanda prevista. A carga é o maior entre as duas: acima de 100% é gargalo e abaixo de 50% é ociosidade.
+
 ## Testes
 
 Projeto `tests/FabricX.Tests` (xUnit), com quatro níveis:
 
 | Nível | O que cobre | Como |
 |---|---|---|
-| Domain | Regras das entidades (`Produto`, `ItemEstrutura`, `OrdemProducao`, `MovimentacaoEstoque`) e o detector de ciclo | Sem banco |
+| Domain | Regras das entidades, o detector de ciclo, as regras de programação e as calculadoras de indicadores e de capacidade | Sem banco |
 | Application | Services com repositórios falsos (`Fakes/`) | Sem banco |
 | Infrastructure | Repositórios contra o `database/script.sql` real | SQLite em memória (`BancoSqliteFixture`) |
 | Api | Endpoints de ponta a ponta, com envelope e status HTTP | `WebApplicationFactory` (`ApiFactory`) com banco temporário |

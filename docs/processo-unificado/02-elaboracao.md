@@ -21,7 +21,6 @@ Detalha os requisitos, fixa a arquitetura e planeja as iterações.
 | RN-13 | Programação: início informado, fim calculado, sem sobreposição no mesmo recurso, respeitando a capacidade diária e a sequência das etapas |
 | RN-14 | Indicadores: qualidade, eficiência e produtividade calculados a partir dos apontamentos (fórmulas em [../03-entidades-e-relacionamentos.md](../03-entidades-e-relacionamentos.md)) |
 
-As regras RN-12 a RN-14 pertencem aos módulos de roteiro, programação e apontamento, que estão em iteração posterior (ver abaixo).
 
 ## Arquitetura
 
