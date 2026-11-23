@@ -9,5 +9,4 @@
 | [processo-unificado/](processo-unificado/01-iniciacao.md) | Documentação das quatro fases do Processo Unificado (Iniciação, Elaboração, Construção, Transição) |
 | [conceitos/](conceitos/README.md) | Conceitos e arquiteturas da disciplina, destilados dos PDFs do professor |
 | [der/der.mmd](der/der.mmd) | Fonte do DER (Mermaid) |
-
-Para ver o DER como imagem: cole o conteúdo de `der/der.mmd` em https://mermaid.live e exporte em PNG/PDF (a entrega pede imagem ou PDF mais o arquivo do diagrama).
+| [der/der.png](der/der.png), [der/der.pdf](der/der.pdf) | DER exportado em imagem e PDF |

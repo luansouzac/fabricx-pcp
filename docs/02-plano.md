@@ -4,7 +4,7 @@ O nome vem de *fábrica* + *X*.
 
 Trabalho de Engenharia de Software I (IF Sudeste MG – Prof. Paulo Dutra), em C# / .NET 10 com Arquitetura Limpa e o padrão `WebResponse<T>` para respostas.
 
-## 1. O que foi criado (esqueleto)
+## 1. Estrutura da solução
 
 ```
 fabricx-pcp/
@@ -18,8 +18,6 @@ fabricx-pcp/
 ├── database/                 scripts DDL (.sql)
 └── docs/                     explicações, plano, entidades e DER
 ```
-
-Já existem e compilam: `DomainException` e `WebResponse<T>` (conforme o PDF). Pastas vazias estão marcadas com `.gitkeep`.
 
 ### Regra de dependência (de fora para dentro)
 
@@ -45,22 +43,24 @@ Infrastructure ──► Application ──► Domain
 | 5 | Integração com ERP/SGQ (desejável) | Interfaces na Application, implementação fake na Infra |
 | 6 | Planejamento de capacidade (demanda × capacidade, gargalos, ociosidade) | `Capacidade` |
 
-## 3. Próximos passos (em ordem)
+## 3. Andamento
 
-1. **Modelagem** (DER feito em `docs/der`; falta o DDL): DER (draw.io / MySQL Workbench) + `database/script.sql` com DDL para **SQLite**.
-2. **Domain**: entidades com regras (ex.: `OrdemProducao` não aceita quantidade ≤ 0 nem prazo no passado), enums de status e prioridade.
-3. **Application**: DTOs de entrada/saída, interfaces de repositório, Services (casos de uso) que devolvem DTO ou lançam exceção.
-4. **Infrastructure**: `AppDbContext` (EF Core), repositórios, injeção de dependência.
-5. **Api**: controllers por módulo, middleware global que converte exceções (`DomainException` → 400, não encontrado → 404, demais → 500) em `WebResponse<T>.Failure`.
-6. **Testes** unitários do Domain e dos Services.
-7. **Documentação** do Processo Unificado (Iniciação, Elaboração, Construção, Transição) no modelo da disciplina + repositório Git com branches por iteração.
+Todas as etapas abaixo estão concluídas.
+
+1. **Modelagem**: DER em `docs/der` (`.mmd`, `.png` e `.pdf`) e DDL para SQLite em `database/script.sql`.
+2. **Domain**: entidades com regras e enums de status e prioridade.
+3. **Application**: DTOs, interfaces de repositório e Services.
+4. **Infrastructure**: `AppDbContext` (EF Core), repositórios e injeção de dependência.
+5. **Api**: controllers por módulo e middleware global de exceções.
+6. **Testes** unitários e de integração (xUnit).
+7. **Documentação** do Processo Unificado em `docs/processo-unificado`.
 
 ## 4. Entregáveis do trabalho (SIGAA, zip)
 
-- [ ] Script DDL `.sql`
-- [ ] Documentação do projeto (modelo da disciplina)
-- [ ] Projeto completo (somente API; Swagger como interface de uso)
-- [ ] DER em imagem/PDF + arquivo do diagrama
+- [x] Script DDL `.sql`
+- [x] Documentação do projeto (modelo da disciplina)
+- [x] Projeto completo (somente API; Swagger como interface de uso)
+- [x] DER em imagem/PDF + arquivo do diagrama
 - [ ] Link do repositório no GitHub
 
 Não atualizar o projeto depois da data de entrega.
