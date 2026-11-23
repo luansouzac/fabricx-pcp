@@ -1,6 +1,7 @@
 using FabricX.Api.Common;
 using FabricX.Application.DTOs.Produtos;
 using FabricX.Application.Interfaces;
+using FabricX.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabricX.Api.Controllers;
@@ -18,9 +19,10 @@ public class ProdutosController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(WebResponse<IReadOnlyList<ProdutoDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Listar(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Listar([FromQuery] TipoProduto? tipo, CancellationToken cancellationToken)
     {
-        var produtos = await _service.ListarAsync(cancellationToken);
+        var produtos = await _service.ListarAsync(tipo, cancellationToken);
         return Ok(WebResponse<IReadOnlyList<ProdutoDto>>.Success(produtos));
     }
 
@@ -69,6 +71,15 @@ public class ProdutosController : ControllerBase
     {
         var produto = await _service.MovimentarEstoqueAsync(id, dto, cancellationToken);
         return Ok(WebResponse<ProdutoDto>.Success(produto));
+    }
+
+    [HttpGet("{id:int}/movimentacoes")]
+    [ProducesResponseType(typeof(WebResponse<IReadOnlyList<MovimentacaoEstoqueDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListarMovimentacoes(int id, CancellationToken cancellationToken)
+    {
+        var movimentacoes = await _service.ListarMovimentacoesAsync(id, cancellationToken);
+        return Ok(WebResponse<IReadOnlyList<MovimentacaoEstoqueDto>>.Success(movimentacoes));
     }
 
     [HttpDelete("{id:int}")]

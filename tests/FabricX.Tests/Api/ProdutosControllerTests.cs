@@ -188,4 +188,62 @@ public class ProdutosControllerTests : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
         Assert.False((await LerAsync(resposta)).GetProperty("data").GetProperty("ativo").GetBoolean());
     }
+
+    [Fact]
+    public async Task Movimentacao_RegistraNoHistoricoEmOrdemDecrescente()
+    {
+        var id = await CriarAsync(CodigoUnico(), estoque: 10);
+        await _cliente.PostAsJsonAsync($"/api/produtos/{id}/movimentacoes", new { tipo = "Entrada", quantidade = 2, motivo = "Compra" });
+        await _cliente.PostAsJsonAsync($"/api/produtos/{id}/movimentacoes", new { tipo = "Saida", quantidade = 3 });
+
+        var resposta = await _cliente.GetAsync($"/api/produtos/{id}/movimentacoes");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        var itens = (await LerAsync(resposta)).GetProperty("data").EnumerateArray().ToList();
+        Assert.Equal(2, itens.Count);
+        Assert.Equal("Saida", itens[0].GetProperty("tipo").GetString());
+        Assert.Equal(3, itens[0].GetProperty("quantidade").GetDouble());
+        Assert.Equal("Entrada", itens[1].GetProperty("tipo").GetString());
+        Assert.Equal("Compra", itens[1].GetProperty("motivo").GetString());
+    }
+
+    [Fact]
+    public async Task Movimentacao_SaidaRecusada_NaoGravaHistorico()
+    {
+        var id = await CriarAsync(CodigoUnico(), estoque: 10);
+        await _cliente.PostAsJsonAsync($"/api/produtos/{id}/movimentacoes", new { tipo = "Saida", quantidade = 11 });
+
+        var historico = await LerAsync(await _cliente.GetAsync($"/api/produtos/{id}/movimentacoes"));
+
+        Assert.Empty(historico.GetProperty("data").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Historico_ProdutoInexistente_Retorna404()
+    {
+        var resposta = await _cliente.GetAsync("/api/produtos/999999/movimentacoes");
+
+        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorTipo()
+    {
+        var codigo = CodigoUnico();
+        await _cliente.PostAsJsonAsync("/api/produtos", new { codigo, nome = "Garrafa", tipo = "Acabado", unidadeMedida = "UN" });
+
+        var corpo = await LerAsync(await _cliente.GetAsync("/api/produtos?tipo=Acabado"));
+
+        var itens = corpo.GetProperty("data").EnumerateArray().ToList();
+        Assert.Contains(itens, p => p.GetProperty("codigo").GetString() == codigo);
+        Assert.All(itens, p => Assert.Equal("Acabado", p.GetProperty("tipo").GetString()));
+    }
+
+    [Fact]
+    public async Task Listar_TipoInvalido_Retorna400()
+    {
+        var resposta = await _cliente.GetAsync("/api/produtos?tipo=Banana");
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
 }

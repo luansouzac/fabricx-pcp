@@ -1,5 +1,6 @@
 using FabricX.Application.Interfaces;
 using FabricX.Domain.Entities;
+using FabricX.Domain.Enums;
 using FabricX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,8 +21,11 @@ public class ProdutoRepository : IProdutoRepository
     public Task<Produto?> ObterPorCodigoAsync(string codigo, CancellationToken cancellationToken) =>
         _contexto.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.Codigo == codigo, cancellationToken);
 
-    public async Task<IReadOnlyList<Produto>> ListarAsync(CancellationToken cancellationToken) =>
-        await _contexto.Produtos.AsNoTracking().OrderBy(p => p.Nome).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<Produto>> ListarAsync(TipoProduto? tipo, CancellationToken cancellationToken) =>
+        await _contexto.Produtos.AsNoTracking()
+            .Where(p => tipo == null || p.Tipo == tipo)
+            .OrderBy(p => p.Nome)
+            .ToListAsync(cancellationToken);
 
     public async Task AdicionarAsync(Produto produto, CancellationToken cancellationToken)
     {

@@ -12,11 +12,12 @@ public class ProdutoServiceTests
     private static readonly CancellationToken Ct = CancellationToken.None;
 
     private readonly ProdutoRepositoryFake _repositorio = new();
+    private readonly MovimentacaoEstoqueRepositoryFake _movimentacoes = new();
     private readonly ProdutoService _service;
 
     public ProdutoServiceTests()
     {
-        _service = new ProdutoService(_repositorio);
+        _service = new ProdutoService(_repositorio, _movimentacoes);
     }
 
     private static CriarProdutoDto NovoDto(string codigo = "P001", double estoque = 10, double minimo = 5) => new()
@@ -78,7 +79,7 @@ public class ProdutoServiceTests
         await _service.CriarAsync(NovoDto("P001"), Ct);
         await _service.CriarAsync(NovoDto("P002"), Ct);
 
-        var resultado = await _service.ListarAsync(Ct);
+        var resultado = await _service.ListarAsync(null, Ct);
 
         Assert.Equal(2, resultado.Count);
     }
@@ -173,5 +174,62 @@ public class ProdutoServiceTests
     public async Task Inativar_Inexistente_LancaNotFoundException()
     {
         await Assert.ThrowsAsync<NotFoundException>(() => _service.InativarAsync(99, Ct));
+    }
+
+    [Fact]
+    public async Task MovimentarEstoque_GravaMovimentacaoComTipoQuantidadeEMotivo()
+    {
+        var criado = await _service.CriarAsync(NovoDto(estoque: 10), Ct);
+
+        await _service.MovimentarEstoqueAsync(criado.Id,
+            new MovimentarEstoqueDto { Tipo = TipoMovimentacao.Saida, Quantidade = 4, Motivo = "Ajuste" }, Ct);
+
+        var movimentacao = Assert.Single(_movimentacoes.Registradas);
+        Assert.Equal(criado.Id, movimentacao.ProdutoId);
+        Assert.Equal(TipoMovimentacao.Saida, movimentacao.Tipo);
+        Assert.Equal(4, movimentacao.Quantidade);
+        Assert.Equal("Ajuste", movimentacao.Motivo);
+    }
+
+    [Fact]
+    public async Task MovimentarEstoque_SaidaMaiorQueSaldo_NaoGravaMovimentacao()
+    {
+        var criado = await _service.CriarAsync(NovoDto(estoque: 10), Ct);
+
+        await Assert.ThrowsAsync<DomainException>(() => _service.MovimentarEstoqueAsync(criado.Id,
+            new MovimentarEstoqueDto { Tipo = TipoMovimentacao.Saida, Quantidade = 11 }, Ct));
+
+        Assert.Empty(_movimentacoes.Registradas);
+    }
+
+    [Fact]
+    public async Task ListarMovimentacoes_DevolveDoProdutoDaMaisRecenteParaAMaisAntiga()
+    {
+        var criado = await _service.CriarAsync(NovoDto(estoque: 10), Ct);
+        await _service.MovimentarEstoqueAsync(criado.Id, new MovimentarEstoqueDto { Tipo = TipoMovimentacao.Entrada, Quantidade = 1 }, Ct);
+        await _service.MovimentarEstoqueAsync(criado.Id, new MovimentarEstoqueDto { Tipo = TipoMovimentacao.Saida, Quantidade = 2 }, Ct);
+
+        var historico = await _service.ListarMovimentacoesAsync(criado.Id, Ct);
+
+        Assert.Equal([TipoMovimentacao.Saida, TipoMovimentacao.Entrada], historico.Select(m => m.Tipo));
+    }
+
+    [Fact]
+    public async Task ListarMovimentacoes_ProdutoInexistente_LancaNotFoundException()
+    {
+        await Assert.ThrowsAsync<NotFoundException>(() => _service.ListarMovimentacoesAsync(99, Ct));
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorTipo()
+    {
+        await _service.CriarAsync(NovoDto("P001"), Ct);
+        var acabado = NovoDto("P002");
+        acabado.Tipo = TipoProduto.Acabado;
+        await _service.CriarAsync(acabado, Ct);
+
+        var resultado = await _service.ListarAsync(TipoProduto.Acabado, Ct);
+
+        Assert.Equal(["P002"], resultado.Select(p => p.Codigo));
     }
 }

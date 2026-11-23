@@ -61,12 +61,13 @@ Endpoints atuais:
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/produtos` | Lista produtos |
+| GET | `/api/produtos?tipo=` | Lista produtos, com filtro opcional por tipo (`MateriaPrima`, `EmProcesso`, `Acabado`) |
 | GET | `/api/produtos/estoque-baixo` | Produtos abaixo do estoque mínimo |
 | GET | `/api/produtos/{id}` | Busca por id |
 | POST | `/api/produtos` | Cria produto |
 | PUT | `/api/produtos/{id}` | Atualiza produto |
-| POST | `/api/produtos/{id}/movimentacoes` | Entrada ou saída de estoque |
+| POST | `/api/produtos/{id}/movimentacoes` | Entrada ou saída de estoque, com motivo opcional |
+| GET | `/api/produtos/{id}/movimentacoes` | Histórico de movimentações, da mais recente para a mais antiga |
 | DELETE | `/api/produtos/{id}` | Inativa produto |
 
 Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode`.

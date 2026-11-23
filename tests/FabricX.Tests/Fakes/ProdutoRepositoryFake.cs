@@ -1,5 +1,6 @@
 using FabricX.Application.Interfaces;
 using FabricX.Domain.Entities;
+using FabricX.Domain.Enums;
 
 namespace FabricX.Tests.Fakes;
 
@@ -16,8 +17,8 @@ public class ProdutoRepositoryFake : IProdutoRepository
     public Task<Produto?> ObterPorCodigoAsync(string codigo, CancellationToken cancellationToken) =>
         Task.FromResult(_produtos.FirstOrDefault(p => p.Codigo == codigo));
 
-    public Task<IReadOnlyList<Produto>> ListarAsync(CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<Produto>>(_produtos.ToList());
+    public Task<IReadOnlyList<Produto>> ListarAsync(TipoProduto? tipo, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Produto>>(_produtos.Where(p => tipo is null || p.Tipo == tipo).ToList());
 
     public Task AdicionarAsync(Produto produto, CancellationToken cancellationToken)
     {
