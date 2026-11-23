@@ -88,6 +88,11 @@ Endpoints atuais:
 | GET | `/api/ordens-producao/{id}/apontamentos` | Apontamentos da ordem |
 | GET | `/api/indicadores?de=&ate=&produtoId=&recursoId=` | Qualidade, eficiência, produtividade e cumprimento de prazo |
 | GET | `/api/indicadores/resumo` | Resumo para o dashboard: ordens por status, estoque baixo e indicadores |
+| GET | `/api/demanda-prevista?periodo=AAAA-MM` | Demanda prevista por produto e mês |
+| POST | `/api/demanda-prevista` | Cria demanda prevista (um registro por produto e período) |
+| PUT | `/api/demanda-prevista/{id}` | Altera período e quantidade |
+| DELETE | `/api/demanda-prevista/{id}` | Remove a demanda |
+| GET | `/api/capacidade?periodo=AAAA-MM` | Capacidade x demanda por recurso, com gargalo e ociosidade |
 | GET | `/api/recursos` | Lista recursos |
 | GET | `/api/recursos/{id}` | Busca recurso por id |
 | POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |

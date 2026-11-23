@@ -36,6 +36,7 @@ public class SeedTests : IDisposable
 
         Assert.Equal(11, await contexto.Produtos.CountAsync(Ct));
         Assert.Equal(6, await contexto.Recursos.CountAsync(Ct));
+        Assert.Equal(2, await contexto.DemandasPrevistas.CountAsync(Ct));
         Assert.Equal(2, await contexto.Database.SqlQuery<int>($"SELECT COUNT(*) AS Value FROM roteiro_etapa").SingleAsync(Ct));
     }
 
@@ -52,5 +53,26 @@ public class SeedTests : IDisposable
 
         Assert.All(saldoComponentes, saldo => Assert.True(saldo >= 60));
         Assert.True(saldoGarrafaDagua < 60);
+    }
+
+    [Fact]
+    public async Task Seed_CapacidadeDeDezembroMostraMontadoraOciosaELinhaDeEmbalagemEmGargalo()
+    {
+        await using var contexto = _banco.CriarContexto();
+        await contexto.Database.ExecuteSqlRawAsync(LerSeed(), Ct);
+        var servico = new FabricX.Application.Services.CapacidadeService(
+            new FabricX.Infrastructure.Repositories.RecursoRepository(contexto),
+            new FabricX.Infrastructure.Repositories.ProgramacaoRepository(contexto),
+            new FabricX.Infrastructure.Repositories.DemandaPrevistaRepository(contexto),
+            new FabricX.Infrastructure.Repositories.RoteiroEtapaRepository(contexto));
+
+        var capacidade = await servico.CalcularAsync("2026-12", Ct);
+
+        var montadora = capacidade.Recursos.Single(r => r.RecursoNome == "Montadora");
+        var linha = capacidade.Recursos.Single(r => r.RecursoNome == "Linha de embalagem");
+        Assert.Equal(2, montadora.HorasNecessariasDemanda, 10);
+        Assert.Equal(FabricX.Domain.Enums.ClassificacaoCarga.Ocioso, montadora.Classificacao);
+        Assert.Equal(16000.0 / 60, linha.HorasNecessariasDemanda, 10);
+        Assert.Equal(FabricX.Domain.Enums.ClassificacaoCarga.Gargalo, linha.Classificacao);
     }
 }

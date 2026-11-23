@@ -35,6 +35,10 @@ INSERT INTO roteiro_etapa (produto_id, recurso_id, sequencia, nome, tempo_ciclo_
     (10, 5, 1, 'Montagem', 2, 10),
     (11, 6, 1, 'Embalagem', 2, 1);
 
+INSERT INTO demanda_prevista (produto_id, periodo, quantidade) VALUES
+    (10, '2026-12', 600),
+    (11, '2026-12', 8000);
+
 INSERT INTO movimentacao_estoque (produto_id, tipo, quantidade, motivo) VALUES
     (1, 'ENTRADA', 100, 'Estoque inicial'),
     (2, 'ENTRADA', 15, 'Estoque inicial'),
