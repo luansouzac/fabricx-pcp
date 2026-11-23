@@ -1,4 +1,5 @@
 using FabricX.Application.Interfaces;
+using FabricX.Infrastructure.Integracoes;
 using FabricX.Infrastructure.Persistence;
 using FabricX.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<IMovimentacaoEstoqueRepository, MovimentacaoEstoqueRepository>();
         services.AddScoped<IItemEstruturaRepository, ItemEstruturaRepository>();
         services.AddScoped<IOrdemProducaoRepository, OrdemProducaoRepository>();
+        services.AddScoped<IErpGateway, ErpGatewaySimulado>();
+        services.AddScoped<ISgqGateway, SgqGatewaySimulado>();
         services.AddScoped<IRecursoRepository, RecursoRepository>();
         services.AddScoped<IProgramacaoRepository, ProgramacaoRepository>();
         services.AddScoped<IApontamentoRepository, ApontamentoRepository>();

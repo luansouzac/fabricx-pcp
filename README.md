@@ -104,6 +104,8 @@ Endpoints atuais:
 | PUT | `/api/ordens-producao/{id}` | Altera quantidade, prazo e prioridade de ordem planejada |
 | POST | `/api/ordens-producao/{id}/avancar` | Avança o status (ao iniciar baixa os componentes, ao concluir dá entrada no acabado) |
 | POST | `/api/ordens-producao/{id}/cancelar` | Cancela ordem planejada ou programada |
+| GET | `/api/integracoes/erp/pedidos` | Pedidos pendentes do ERP (implementação simulada) |
+| POST | `/api/integracoes/sgq/resultados` | Envia resultado de qualidade ao SGQ (implementação simulada) |
 | DELETE | `/api/produtos/{id}` | Inativa produto |
 
 Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode`.

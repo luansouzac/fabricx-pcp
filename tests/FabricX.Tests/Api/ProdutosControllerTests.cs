@@ -481,4 +481,26 @@ public class ProdutosControllerTests : IClassFixture<ApiFactory>
         Assert.All(canceladas, o => Assert.Equal("Cancelada", o.GetProperty("status").GetString()));
         Assert.Equal(HttpStatusCode.BadRequest, (await _cliente.GetAsync("/api/ordens-producao?status=Banana")).StatusCode);
     }
+
+    [Fact]
+    public async Task Integracao_ErpListaPedidosSimulados()
+    {
+        var resposta = await _cliente.GetAsync("/api/integracoes/erp/pedidos");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Equal(2, (await LerAsync(resposta)).GetProperty("data").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Integracao_SgqConfirmaResultado_EValidaEntrada()
+    {
+        var ok = await _cliente.PostAsJsonAsync("/api/integracoes/sgq/resultados",
+            new { ordemNumero = "OP-2026-0001", quantidadeInspecionada = 20, quantidadeDefeituosa = 2 });
+        var invalido = await _cliente.PostAsJsonAsync("/api/integracoes/sgq/resultados",
+            new { ordemNumero = "OP-2026-0001", quantidadeInspecionada = 2, quantidadeDefeituosa = 3 });
+
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        Assert.Equal("SGQ-SIM-OP-2026-0001", (await LerAsync(ok)).GetProperty("data").GetProperty("protocolo").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, invalido.StatusCode);
+    }
 }
