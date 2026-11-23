@@ -288,4 +288,75 @@ public class RecursosControllerTests : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, (await _cliente.DeleteAsync($"/api/programacao/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _cliente.DeleteAsync($"/api/programacao/{id}")).StatusCode);
     }
+
+    private async Task<int> AgendarMontagemAsync(double quantidade)
+    {
+        var (ordem, montagem, _, _, _) = await PrepararKitAsync(quantidade);
+        var resposta = await AgendarAsync(ordem, montagem, Dia().AddHours(8));
+        return (await LerAsync(resposta)).GetProperty("data").GetProperty("id").GetInt32();
+    }
+
+    private Task<HttpResponseMessage> ApontarAsync(int programacaoId, double produzida, double defeituosa = 0, double tempo = 10) =>
+        _cliente.PostAsJsonAsync($"/api/programacao/{programacaoId}/apontamentos",
+            new { quantidadeProduzida = produzida, quantidadeDefeituosa = defeituosa, tempoGastoMin = tempo });
+
+    [Fact]
+    public async Task Apontamento_PrimeiroColocaEmAndamentoESomaAtingidaConclui()
+    {
+        var programacao = await AgendarMontagemAsync(60);
+
+        var primeiro = await ApontarAsync(programacao, 40, 2, 8);
+        Assert.Equal(HttpStatusCode.Created, primeiro.StatusCode);
+        Assert.Equal("EmAndamento", (await LerAsync(primeiro)).GetProperty("data").GetProperty("statusProgramacao").GetString());
+
+        var ultimo = await ApontarAsync(programacao, 20, 0, 4);
+        Assert.Equal("Concluida", (await LerAsync(ultimo)).GetProperty("data").GetProperty("statusProgramacao").GetString());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await ApontarAsync(programacao, 1)).StatusCode);
+        Assert.Equal(2, (await LerAsync(await _cliente.GetAsync($"/api/programacao/{programacao}/apontamentos"))).GetProperty("data").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Apontamento_ValoresInvalidosOuProgramacaoInexistente_Retornam400E404()
+    {
+        var programacao = await AgendarMontagemAsync(60);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await ApontarAsync(programacao, 0, 0)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await ApontarAsync(programacao, 5, 0, 0)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await ApontarAsync(programacao, -1, 3)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await ApontarAsync(999999, 5)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync("/api/programacao/999999/apontamentos")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync("/api/ordens-producao/999999/apontamentos")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Indicadores_CalculamComOsApontamentosDoProduto()
+    {
+        var (ordem, montagem, _, _, _) = await PrepararKitAsync(100);
+        var produtoId = (await LerAsync(await _cliente.GetAsync($"/api/ordens-producao/{ordem}"))).GetProperty("data").GetProperty("produtoId").GetInt32();
+        var programacao = (await LerAsync(await AgendarAsync(ordem, montagem, Dia().AddHours(8)))).GetProperty("data").GetProperty("id").GetInt32();
+        await ApontarAsync(programacao, 18, 2, 5);
+        await ApontarAsync(programacao, 25, 0, 8);
+
+        var dados = (await LerAsync(await _cliente.GetAsync($"/api/indicadores?produtoId={produtoId}"))).GetProperty("data");
+
+        Assert.Equal(2.0 / 45, dados.GetProperty("qualidade").GetDouble(), 6);
+        Assert.Equal(10.0 / 13, dados.GetProperty("eficiencia").GetDouble(), 6);
+        Assert.Equal(43 / (13.0 / 60), dados.GetProperty("produtividadePorHora").GetDouble(), 4);
+        Assert.Equal(JsonValueKind.Null, dados.GetProperty("cumprimentoDePrazo").ValueKind);
+    }
+
+    [Fact]
+    public async Task Indicadores_SemDados_VoltamNulosEResumoResponde()
+    {
+        var vazio = (await LerAsync(await _cliente.GetAsync("/api/indicadores?produtoId=999999"))).GetProperty("data");
+        Assert.Equal(JsonValueKind.Null, vazio.GetProperty("eficiencia").ValueKind);
+
+        var resumo = await _cliente.GetAsync("/api/indicadores/resumo");
+
+        Assert.Equal(HttpStatusCode.OK, resumo.StatusCode);
+        var dados = (await LerAsync(resumo)).GetProperty("data");
+        Assert.Equal(5, dados.GetProperty("ordensPorStatus").GetArrayLength());
+        Assert.Equal(JsonValueKind.Array, dados.GetProperty("produtosComEstoqueBaixo").ValueKind);
+    }
 }

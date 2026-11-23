@@ -83,6 +83,11 @@ Endpoints atuais:
 | GET | `/api/programacao?recursoId=&de=&ate=` | Cronograma por recurso e período, ordenado por início |
 | PUT | `/api/programacao/{id}` | Reprograma (só enquanto agendada) |
 | DELETE | `/api/programacao/{id}` | Remove (só enquanto agendada) |
+| POST | `/api/programacao/{id}/apontamentos` | Aponta produção real (produzida, defeituosa, tempo gasto) |
+| GET | `/api/programacao/{id}/apontamentos` | Apontamentos da programação |
+| GET | `/api/ordens-producao/{id}/apontamentos` | Apontamentos da ordem |
+| GET | `/api/indicadores?de=&ate=&produtoId=&recursoId=` | Qualidade, eficiência, produtividade e cumprimento de prazo |
+| GET | `/api/indicadores/resumo` | Resumo para o dashboard: ordens por status, estoque baixo e indicadores |
 | GET | `/api/recursos` | Lista recursos |
 | GET | `/api/recursos/{id}` | Busca recurso por id |
 | POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |

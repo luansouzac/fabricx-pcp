@@ -37,6 +37,12 @@ public class Programacao
         DefinirAgenda(recursoId, inicioPrevisto, fimPrevisto);
     }
 
+    public void GarantirPodeReceberApontamento()
+    {
+        if (Status == StatusProgramacao.Concluida)
+            throw new DomainException("A programação já está concluída e não recebe novos apontamentos.");
+    }
+
     public void GarantirPodeSerReprogramada() => GarantirAgendada("reprogramada");
 
     public void GarantirPodeSerRemovida() => GarantirAgendada("removida");
