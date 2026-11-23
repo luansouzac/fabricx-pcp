@@ -50,6 +50,9 @@ Prioridade MoSCoW: M (must), S (should), C (could).
 | RF-13 | Calcular indicadores de eficiência, produtividade, qualidade e cumprimento de prazo | M |
 | RF-14 | Planejar capacidade: demanda prevista contra capacidade, com gargalo e ociosidade | S |
 | RF-15 | Integrar com ERP/SGQ por interface, com implementação simulada | C |
+| RF-16 | Cadastrar usuários e autenticar por e-mail e senha, devolvendo um token JWT | M |
+| RF-17 | Proteger os endpoints com o token e restringir a gestão de usuários e as inativações ao perfil Administrador | M |
+| RF-18 | Guardar em cache as consultas de indicadores e de capacidade, invalidando o cache após qualquer escrita | M |
 
 ## Requisitos não funcionais
 
@@ -63,6 +66,8 @@ Prioridade MoSCoW: M (must), S (should), C (could).
 | RNF-06 | Código testado com xUnit em quatro níveis: Domain, Service, repositório e API |
 | RNF-07 | API documentada em OpenAPI e usável pelo Swagger UI em Development |
 | RNF-08 | Execução por contêiner Docker com volume para o arquivo do banco |
+| RNF-09 | Senha nunca em texto puro (PBKDF2) e chave do JWT fora do código-fonte (`Jwt__Chave`) |
+| RNF-10 | Falhas de autenticação e de permissão saem no envelope `WebResponse<T>` com 401 e 403 |
 
 ## Casos de uso principais
 
