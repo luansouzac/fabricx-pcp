@@ -38,7 +38,8 @@ CREATE TABLE roteiro_etapa (
     recurso_id          INTEGER NOT NULL REFERENCES recurso (id),
     sequencia           INTEGER NOT NULL CHECK (sequencia > 0),
     nome                TEXT    NOT NULL,
-    tempo_unitario_min  REAL    NOT NULL CHECK (tempo_unitario_min > 0),
+    tempo_ciclo_min     REAL    NOT NULL CHECK (tempo_ciclo_min > 0),
+    unidades_por_ciclo  INTEGER NOT NULL DEFAULT 1 CHECK (unidades_por_ciclo >= 1),
     UNIQUE (produto_id, sequencia)
 );
 
