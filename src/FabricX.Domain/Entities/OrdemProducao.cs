@@ -73,6 +73,9 @@ public class OrdemProducao
         if (Status == StatusOrdem.Concluida)
             throw new DomainException("Uma ordem concluída não pode ser cancelada.");
 
+        if (Status == StatusOrdem.EmProducao)
+            throw new DomainException("Uma ordem em produção não pode ser cancelada: o material já foi consumido.");
+
         if (Status == StatusOrdem.Cancelada)
             throw new DomainException("A ordem já está cancelada.");
 

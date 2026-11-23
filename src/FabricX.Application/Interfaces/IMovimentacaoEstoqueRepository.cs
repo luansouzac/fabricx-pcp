@@ -6,4 +6,5 @@ public interface IMovimentacaoEstoqueRepository
 {
     Task<IReadOnlyList<MovimentacaoEstoque>> ListarPorProdutoAsync(int produtoId, CancellationToken cancellationToken);
     Task AdicionarAsync(MovimentacaoEstoque movimentacao, CancellationToken cancellationToken);
+    Task AdicionarVariasAsync(IReadOnlyCollection<MovimentacaoEstoque> movimentacoes, CancellationToken cancellationToken);
 }

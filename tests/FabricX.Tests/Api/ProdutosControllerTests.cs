@@ -348,4 +348,137 @@ public class ProdutosControllerTests : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
     }
+
+    private async Task<(int Tampinha, int Garrafa, int GarrafaDagua)> PrepararGarrafaDaguaAsync(double estoqueTampinha = 100)
+    {
+        var tampinha = await CriarComTipoAsync(CodigoUnico(), "Tampinha", "MateriaPrima");
+        var garrafa = await CriarComTipoAsync(CodigoUnico(), "Garrafa", "MateriaPrima");
+        var garrafaDagua = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        await _cliente.PostAsJsonAsync($"/api/produtos/{tampinha}/movimentacoes", new { tipo = "Entrada", quantidade = estoqueTampinha });
+        await _cliente.PostAsJsonAsync($"/api/produtos/{garrafa}/movimentacoes", new { tipo = "Entrada", quantidade = 100 });
+        await AdicionarComponenteAsync(garrafaDagua, tampinha);
+        await AdicionarComponenteAsync(garrafaDagua, garrafa);
+        return (tampinha, garrafa, garrafaDagua);
+    }
+
+    private Task<HttpResponseMessage> CriarOrdemAsync(int produtoId, double quantidade) =>
+        _cliente.PostAsJsonAsync("/api/ordens-producao", new
+        {
+            produtoId,
+            quantidade,
+            prazoEntrega = DateOnly.FromDateTime(DateTime.Today.AddDays(10)).ToString("yyyy-MM-dd")
+        });
+
+    private async Task<double> SaldoAsync(int produtoId) =>
+        (await LerAsync(await _cliente.GetAsync($"/api/produtos/{produtoId}"))).GetProperty("data").GetProperty("estoqueAtual").GetDouble();
+
+    [Fact]
+    public async Task Ordem_FluxoCompletoDe60GarrafasDagua_AjustaOsSaldos()
+    {
+        var (tampinha, garrafa, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+
+        var criada = await CriarOrdemAsync(garrafaDagua, 60);
+        Assert.Equal(HttpStatusCode.Created, criada.StatusCode);
+        var dados = (await LerAsync(criada)).GetProperty("data");
+        var id = dados.GetProperty("id").GetInt32();
+        Assert.StartsWith($"OP-{DateTime.Now.Year}-", dados.GetProperty("numero").GetString());
+        Assert.Equal("Planejada", dados.GetProperty("status").GetString());
+
+        foreach (var esperado in new[] { "Programada", "EmProducao", "Concluida" })
+        {
+            var avancada = await _cliente.PostAsync($"/api/ordens-producao/{id}/avancar", null);
+            Assert.Equal(HttpStatusCode.OK, avancada.StatusCode);
+            Assert.Equal(esperado, (await LerAsync(avancada)).GetProperty("data").GetProperty("status").GetString());
+        }
+
+        Assert.Equal(40, await SaldoAsync(tampinha));
+        Assert.Equal(40, await SaldoAsync(garrafa));
+        Assert.Equal(60, await SaldoAsync(garrafaDagua));
+        var historico = (await LerAsync(await _cliente.GetAsync($"/api/produtos/{garrafaDagua}/movimentacoes"))).GetProperty("data").EnumerateArray().ToList();
+        Assert.Equal(id, historico.Single().GetProperty("ordemId").GetInt32());
+    }
+
+    [Fact]
+    public async Task Ordem_SaldoInsuficienteNaCriacao_Retorna400ESemGravar()
+    {
+        var (_, _, garrafaDagua) = await PrepararGarrafaDaguaAsync(estoqueTampinha: 50);
+
+        var resposta = await CriarOrdemAsync(garrafaDagua, 60);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Contains("Estoque insuficiente de", (await LerAsync(resposta)).GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Ordem_IniciarSemSaldo_Retorna400ENaoAlteraSaldos()
+    {
+        var (tampinha, garrafa, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+        var id = (await LerAsync(await CriarOrdemAsync(garrafaDagua, 60))).GetProperty("data").GetProperty("id").GetInt32();
+        await _cliente.PostAsync($"/api/ordens-producao/{id}/avancar", null);
+        await _cliente.PostAsJsonAsync($"/api/produtos/{garrafa}/movimentacoes", new { tipo = "Saida", quantidade = 70 });
+
+        var resposta = await _cliente.PostAsync($"/api/ordens-producao/{id}/avancar", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Equal(100, await SaldoAsync(tampinha));
+        Assert.Equal(30, await SaldoAsync(garrafa));
+    }
+
+    [Fact]
+    public async Task Ordem_CancelarEmProducao_Retorna400()
+    {
+        var (_, _, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+        var id = (await LerAsync(await CriarOrdemAsync(garrafaDagua, 10))).GetProperty("data").GetProperty("id").GetInt32();
+        await _cliente.PostAsync($"/api/ordens-producao/{id}/avancar", null);
+        await _cliente.PostAsync($"/api/ordens-producao/{id}/avancar", null);
+
+        var resposta = await _cliente.PostAsync($"/api/ordens-producao/{id}/cancelar", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ordem_CancelarPlanejada_Retorna200()
+    {
+        var (_, _, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+        var id = (await LerAsync(await CriarOrdemAsync(garrafaDagua, 10))).GetProperty("data").GetProperty("id").GetInt32();
+
+        var resposta = await _cliente.PostAsync($"/api/ordens-producao/{id}/cancelar", null);
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Equal("Cancelada", (await LerAsync(resposta)).GetProperty("data").GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Ordem_Inexistente_Retorna404()
+    {
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync("/api/ordens-producao/999999")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.PostAsync("/api/ordens-producao/999999/avancar", null)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Ordem_PrazoNoPassadoOuQuantidadeZero_Retorna400()
+    {
+        var (_, _, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+
+        var passado = await _cliente.PostAsJsonAsync("/api/ordens-producao", new { produtoId = garrafaDagua, quantidade = 1, prazoEntrega = "2020-01-01" });
+        var zero = await CriarOrdemAsync(garrafaDagua, 0);
+
+        Assert.Equal(HttpStatusCode.BadRequest, passado.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, zero.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ordem_ListaComFiltroDeStatus()
+    {
+        var (_, _, garrafaDagua) = await PrepararGarrafaDaguaAsync();
+        var id = (await LerAsync(await CriarOrdemAsync(garrafaDagua, 5))).GetProperty("data").GetProperty("id").GetInt32();
+        await _cliente.PostAsync($"/api/ordens-producao/{id}/cancelar", null);
+
+        var canceladas = (await LerAsync(await _cliente.GetAsync("/api/ordens-producao?status=Cancelada"))).GetProperty("data").EnumerateArray().ToList();
+
+        Assert.Contains(canceladas, o => o.GetProperty("id").GetInt32() == id);
+        Assert.All(canceladas, o => Assert.Equal("Cancelada", o.GetProperty("status").GetString()));
+        Assert.Equal(HttpStatusCode.BadRequest, (await _cliente.GetAsync("/api/ordens-producao?status=Banana")).StatusCode);
+    }
 }

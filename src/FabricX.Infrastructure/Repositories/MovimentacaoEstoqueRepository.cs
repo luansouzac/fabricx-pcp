@@ -22,9 +22,12 @@ public class MovimentacaoEstoqueRepository : IMovimentacaoEstoqueRepository
             .ToListAsync(cancellationToken);
 
     // O SaveChanges grava junto o saldo do produto já alterado no mesmo AppDbContext (scoped), em uma transação só.
-    public async Task AdicionarAsync(MovimentacaoEstoque movimentacao, CancellationToken cancellationToken)
+    public Task AdicionarAsync(MovimentacaoEstoque movimentacao, CancellationToken cancellationToken) =>
+        AdicionarVariasAsync([movimentacao], cancellationToken);
+
+    public async Task AdicionarVariasAsync(IReadOnlyCollection<MovimentacaoEstoque> movimentacoes, CancellationToken cancellationToken)
     {
-        _contexto.MovimentacoesEstoque.Add(movimentacao);
+        _contexto.MovimentacoesEstoque.AddRange(movimentacoes);
         await _contexto.SaveChangesAsync(cancellationToken);
     }
 }

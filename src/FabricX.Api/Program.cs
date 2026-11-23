@@ -34,6 +34,7 @@ builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("De
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
+builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
 
 var app = builder.Build();
 
