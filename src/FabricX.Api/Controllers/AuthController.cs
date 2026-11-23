@@ -1,12 +1,14 @@
 using FabricX.Api.Common;
 using FabricX.Application.DTOs.Auth;
 using FabricX.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabricX.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _service;

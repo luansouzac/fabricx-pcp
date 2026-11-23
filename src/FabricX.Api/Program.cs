@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Serialization;
 using FabricX.Api.Common;
 using FabricX.Api.Middleware;
@@ -6,7 +7,11 @@ using FabricX.Application.Services;
 using FabricX.Infrastructure;
 using FabricX.Infrastructure.Persistence;
 using FabricX.Infrastructure.Seguranca;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +38,34 @@ builder.Services.AddOptions<JwtOptions>()
     .Validate(o => o.ExpiraEmMinutos > 0, "Jwt:ExpiraEmMinutos deve ser maior que zero.")
     .ValidateOnStart();
 
-builder.Services.AddOpenApi();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((opcoes, jwt) =>
+    {
+        opcoes.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Value.Emissor,
+            ValidateAudience = true,
+            ValidAudience = jwt.Value.Audiencia,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Chave)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "sub",
+            RoleClaimType = GeradorDeTokenJwt.ClaimPerfil
+        };
+        opcoes.MapInboundClaims = false;
+        opcoes.Events = RespostasDeAutenticacao.Eventos();
+    });
+
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
+builder.Services.AddOpenApi(opcoes => opcoes.AddDocumentTransformer<BearerOpenApiTransformer>());
 
 builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica =>
     politica.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
@@ -41,6 +73,7 @@ builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
@@ -66,12 +99,13 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
     app.UseSwaggerUI(opcoes => opcoes.SwaggerEndpoint("/openapi/v1.json", "FabricX API v1"));
     app.UseCors("Desenvolvimento");
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
