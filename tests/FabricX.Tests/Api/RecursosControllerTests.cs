@@ -178,4 +178,114 @@ public class RecursosControllerTests : IClassFixture<ApiFactory>
     {
         Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync("/api/produtos/999999/roteiro")).StatusCode);
     }
+
+    private async Task<(int OrdemId, int Montagem, int Embalagem, int Montadora, int Linha)> PrepararKitAsync(double quantidade = 60)
+    {
+        var kit = await CriarProdutoAsync();
+        var montadora = await CriarAsync(NomeUnico());
+        var linha = await CriarAsync(NomeUnico());
+        var montagem = (await LerAsync(await AdicionarEtapaAsync(kit, montadora, 1, 2, 10))).GetProperty("data").GetProperty("id").GetInt32();
+        var embalagem = (await LerAsync(await _cliente.PostAsJsonAsync($"/api/produtos/{kit}/roteiro",
+            new { recursoId = linha, sequencia = 2, nome = "Embalagem", tempoCicloMin = 2, unidadesPorCiclo = 1 }))).GetProperty("data").GetProperty("id").GetInt32();
+        var ordem = await _cliente.PostAsJsonAsync("/api/ordens-producao", new
+        {
+            produtoId = kit,
+            quantidade,
+            prazoEntrega = DateOnly.FromDateTime(DateTime.Today.AddDays(40)).ToString("yyyy-MM-dd")
+        });
+        var ordemId = (await LerAsync(ordem)).GetProperty("data").GetProperty("id").GetInt32();
+        return (ordemId, montagem, embalagem, montadora, linha);
+    }
+
+    private Task<HttpResponseMessage> AgendarAsync(int ordemId, int etapaId, DateTime inicio, int? recursoId = null) =>
+        _cliente.PostAsJsonAsync($"/api/ordens-producao/{ordemId}/programacao",
+            new { etapaId, inicio = inicio.ToString("yyyy-MM-ddTHH:mm:ss"), recursoId });
+
+    private static DateTime Dia() => DateTime.Today.AddDays(15);
+
+    [Fact]
+    public async Task Programacao_FimCalculadoEOrdemFicaProgramadaAoAgendarTodasAsEtapas()
+    {
+        var (ordem, montagem, embalagem, _, _) = await PrepararKitAsync(60);
+
+        var primeira = await AgendarAsync(ordem, montagem, Dia().AddHours(8));
+        Assert.Equal(HttpStatusCode.Created, primeira.StatusCode);
+        var dados = (await LerAsync(primeira)).GetProperty("data");
+        Assert.Equal(Dia().AddHours(8).AddMinutes(12), dados.GetProperty("fimPrevisto").GetDateTime());
+        Assert.Equal("Agendada", dados.GetProperty("status").GetString());
+
+        var statusAntes = (await LerAsync(await _cliente.GetAsync($"/api/ordens-producao/{ordem}"))).GetProperty("data").GetProperty("status").GetString();
+        Assert.Equal("Planejada", statusAntes);
+
+        var segunda = await AgendarAsync(ordem, embalagem, Dia().AddHours(9));
+        Assert.Equal(HttpStatusCode.Created, segunda.StatusCode);
+        Assert.Equal(Dia().AddHours(9).AddMinutes(120), (await LerAsync(segunda)).GetProperty("data").GetProperty("fimPrevisto").GetDateTime());
+
+        var statusDepois = (await LerAsync(await _cliente.GetAsync($"/api/ordens-producao/{ordem}"))).GetProperty("data").GetProperty("status").GetString();
+        Assert.Equal("Programada", statusDepois);
+        Assert.Equal(2, (await LerAsync(await _cliente.GetAsync($"/api/ordens-producao/{ordem}/programacao"))).GetProperty("data").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Programacao_ConflitoDeRecurso_Retorna400()
+    {
+        var (ordem1, montagem1, _, montadora, _) = await PrepararKitAsync(60);
+        var (ordem2, montagem2, _, _, _) = await PrepararKitAsync(60);
+        await AgendarAsync(ordem1, montagem1, Dia().AddHours(8));
+
+        var resposta = await AgendarAsync(ordem2, montagem2, Dia().AddHours(8).AddMinutes(5), montadora);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Contains("já está ocupado", (await LerAsync(resposta)).GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Programacao_SegundaEtapaAntesDaPrimeira_Retorna400()
+    {
+        var (ordem, _, embalagem, _, _) = await PrepararKitAsync();
+
+        var resposta = await AgendarAsync(ordem, embalagem, Dia().AddHours(8));
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Programacao_OrdemOuEtapaInexistente_Retorna404()
+    {
+        var (ordem, _, _, _, _) = await PrepararKitAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await AgendarAsync(999999, 1, Dia())).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await AgendarAsync(ordem, 999999, Dia())).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.GetAsync("/api/ordens-producao/999999/programacao")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Programacao_CronogramaPorRecursoEPeriodo_OrdenadoPorInicio()
+    {
+        var (ordem, montagem, embalagem, montadora, linha) = await PrepararKitAsync(10);
+        await AgendarAsync(ordem, montagem, Dia().AddHours(8));
+        await AgendarAsync(ordem, embalagem, Dia().AddHours(10));
+        var dia = Dia().ToString("yyyy-MM-dd");
+
+        var doRecurso = (await LerAsync(await _cliente.GetAsync($"/api/programacao?recursoId={linha}&de={dia}&ate={dia}"))).GetProperty("data").EnumerateArray().ToList();
+        var outroDia = (await LerAsync(await _cliente.GetAsync($"/api/programacao?recursoId={montadora}&de={Dia().AddDays(2):yyyy-MM-dd}"))).GetProperty("data");
+
+        Assert.Single(doRecurso);
+        Assert.Equal("Embalagem", doRecurso[0].GetProperty("etapaNome").GetString());
+        Assert.Equal(0, outroDia.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Programacao_ReprogramaERemove()
+    {
+        var (ordem, montagem, _, _, _) = await PrepararKitAsync();
+        var id = (await LerAsync(await AgendarAsync(ordem, montagem, Dia().AddHours(8)))).GetProperty("data").GetProperty("id").GetInt32();
+
+        var nova = await _cliente.PutAsJsonAsync($"/api/programacao/{id}", new { inicio = Dia().AddHours(10).ToString("yyyy-MM-ddTHH:mm:ss") });
+        Assert.Equal(HttpStatusCode.OK, nova.StatusCode);
+        Assert.Equal(Dia().AddHours(10), (await LerAsync(nova)).GetProperty("data").GetProperty("inicioPrevisto").GetDateTime());
+
+        Assert.Equal(HttpStatusCode.OK, (await _cliente.DeleteAsync($"/api/programacao/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.DeleteAsync($"/api/programacao/{id}")).StatusCode);
+    }
 }

@@ -78,6 +78,11 @@ Endpoints atuais:
 | POST | `/api/produtos/{id}/roteiro` | Adiciona etapa (recurso ativo, sequência única, ciclo e unidades por ciclo) |
 | PUT | `/api/produtos/{id}/roteiro/{etapaId}` | Altera a etapa |
 | DELETE | `/api/produtos/{id}/roteiro/{etapaId}` | Remove a etapa |
+| POST | `/api/ordens-producao/{id}/programacao` | Programa uma etapa da ordem (início informado, fim calculado, sem sobreposição e dentro da capacidade) |
+| GET | `/api/ordens-producao/{id}/programacao` | Etapas programadas da ordem |
+| GET | `/api/programacao?recursoId=&de=&ate=` | Cronograma por recurso e período, ordenado por início |
+| PUT | `/api/programacao/{id}` | Reprograma (só enquanto agendada) |
+| DELETE | `/api/programacao/{id}` | Remove (só enquanto agendada) |
 | GET | `/api/recursos` | Lista recursos |
 | GET | `/api/recursos/{id}` | Busca recurso por id |
 | POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |
