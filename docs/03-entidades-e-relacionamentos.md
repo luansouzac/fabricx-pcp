@@ -9,7 +9,7 @@ Mapa dos requisitos do enunciado para as tabelas. O DER está em [der/der.mmd](d
 | `PRODUTO` | Cadastro único de matéria-prima, produto em processo e acabado (campo `tipo`). Guarda saldo e estoque mínimo. | Estoque |
 | `ITEM_ESTRUTURA` | Estrutura do produto: quanto de cada componente um produto pai consome. | Ordens de produção, Estoque |
 | `RECURSO` | Máquina, operador ou linha, com `capacidade_horas_dia`. | Programação, Capacidade |
-| `ROTEIRO_ETAPA` | Sequência de etapas de um produto, com recurso e tempo por unidade. | Programação |
+| `ROTEIRO_ETAPA` | Sequência de etapas de um produto, com recurso, tempo de um ciclo e unidades feitas por ciclo (paralelismo). | Programação |
 | `ORDEM_PRODUCAO` | Produto, quantidade, prazo, prioridade e status. | Ordens de produção |
 | `PROGRAMACAO` | Etapa de uma ordem alocada a um recurso com início e fim previstos (o cronograma). | Programação |
 | `APONTAMENTO` | Produção real: quantidade boa, defeituosa e tempo gasto. | Desempenho |
@@ -30,7 +30,7 @@ Mapa dos requisitos do enunciado para as tabelas. O DER está em [der/der.mmd](d
 | Indicador | Cálculo |
 |---|---|
 | Qualidade | `sum(qtd_defeituosa) / sum(qtd_produzida + qtd_defeituosa)` |
-| Eficiência | tempo padrão (`tempo_unitario_min × qtd`) ÷ `tempo_gasto_min` |
+| Eficiência | tempo padrão (`teto(qtd ÷ unidades_por_ciclo) × tempo_ciclo_min`) ÷ `tempo_gasto_min` |
 | Produtividade | `qtd_produzida` por hora apontada |
 | Cumprimento de prazo | ordens `CONCLUIDA` com `concluida_em <= prazo_entrega` |
 | Gargalo / ociosidade | horas programadas no recurso ÷ (`capacidade_horas_dia` × dias do período) |
@@ -91,7 +91,8 @@ erDiagram
         INTEGER recurso_id FK
         INTEGER sequencia
         TEXT nome
-        REAL tempo_unitario_min
+        REAL tempo_ciclo_min
+        INTEGER unidades_por_ciclo "padrao 1"
     }
     ORDEM_PRODUCAO {
         INTEGER id PK
