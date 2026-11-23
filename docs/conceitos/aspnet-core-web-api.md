@@ -76,7 +76,7 @@ Do tutorial de Swagger (que cobre até .NET 8):
 - Para proteger os endpoints de documentação: `app.MapSwagger().RequireAuthorization()`.
 - A página não explica comentários XML nem `ProducesResponseType`.
 
-No FabricX: `AddOpenApi()` e `MapOpenApi()` em `Program.cs`, que é o caminho embutido recomendado para .NET 9+. `MapOpenApi()` está dentro de `if (app.Environment.IsDevelopment())`, igual à restrição que o tutorial usa para o Swagger UI. Não adicionar Swashbuckle.
+No FabricX: `AddOpenApi()` e `MapOpenApi()` em `Program.cs`, que é o caminho embutido recomendado para .NET 9+. `MapOpenApi()` está dentro de `if (app.Environment.IsDevelopment())`, igual à restrição que o tutorial usa para o Swagger UI. O `AddOpenApi()` só gera o JSON, sem interface. Para a UI o projeto usa só o pacote `Swashbuckle.AspNetCore.SwaggerUI`, apontado para `/openapi/v1.json`, em `/swagger` e também só em Development. Não se usa o `AddSwaggerGen()` do Swashbuckle: a geração do documento continua com o OpenAPI embutido.
 
 ## O que o hub de documentação lista (para consulta futura)
 
