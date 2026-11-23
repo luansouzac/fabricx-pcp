@@ -36,6 +36,7 @@ builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
 builder.Services.AddScoped<IRecursoService, RecursoService>();
+builder.Services.AddScoped<IProgramacaoService, ProgramacaoService>();
 builder.Services.AddScoped<IRoteiroService, RoteiroService>();
 
 var app = builder.Build();
