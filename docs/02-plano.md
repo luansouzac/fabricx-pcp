@@ -71,7 +71,7 @@ Não atualizar o projeto depois da data de entrega.
   - Os Services dependem só de interfaces (`IOrdemProducaoRepository`, ...) definidas na Application.
   - Só a `Infrastructure` conhece o provider (EF Core). Trocar para MariaDB/MySQL/SQL Server = trocar o pacote do provider e a linha de registro no `Program.cs`, sem tocar em Domain, Application ou Controllers.
   - A string de conexão e o provider ficam no `appsettings.json`.
-- **Escopo atual: apenas API** (ASP.NET Core Web API). Testes manuais via Swagger/OpenAPI e arquivo `.http`.
+- **Escopo atual: apenas API** (ASP.NET Core Web API). Testes manuais via Swagger UI.
 - **Front-end futuro: Vue.js**, em projeto separado (`web/`), consumindo a API e o contrato `WebResponse<T>`. Fica fora do escopo por enquanto; nada dele é criado agora.
 - **Respostas**: toda resposta HTTP usa `WebResponse<T>`, montado na Api (controllers e middleware).
 - **Ponto de atenção**: o enunciado exige "interface gráfica". Enquanto não houver o front-end em Vue, o Swagger UI é o que mais se aproxima disso. Vale confirmar com o professor se API pura é aceita.
