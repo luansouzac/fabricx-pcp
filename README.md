@@ -72,6 +72,11 @@ Endpoints atuais:
 | POST | `/api/produtos/{id}/estrutura` | Adiciona componente (recusa par repetido e ciclo) |
 | PUT | `/api/produtos/{id}/estrutura/{componenteId}` | Altera a quantidade do componente |
 | DELETE | `/api/produtos/{id}/estrutura/{componenteId}` | Remove o componente |
+| GET | `/api/recursos` | Lista recursos |
+| GET | `/api/recursos/{id}` | Busca recurso por id |
+| POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |
+| PUT | `/api/recursos/{id}` | Atualiza recurso |
+| DELETE | `/api/recursos/{id}` | Inativa recurso (não apaga) |
 | GET | `/api/ordens-producao?status=` | Lista ordens, com filtro opcional por status |
 | GET | `/api/ordens-producao/{id}` | Busca ordem por id |
 | POST | `/api/ordens-producao` | Cria ordem (número gerado, valida saldo dos componentes) |
