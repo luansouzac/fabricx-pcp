@@ -45,3 +45,7 @@ INSERT INTO movimentacao_estoque (produto_id, tipo, quantidade, motivo) VALUES
     (6, 'ENTRADA', 12, 'Estoque inicial'),
     (8, 'ENTRADA', 200, 'Estoque inicial'),
     (9, 'ENTRADA', 200, 'Estoque inicial');
+
+INSERT INTO usuario (nome, email, senha_hash, perfil) VALUES
+    ('Administrador', 'admin@fabricx.com', 'PBKDF2-SHA256$210000$fy/kB5knVfpQGkC7bnQ3Qg==$FNuZmsJsbGz/H//oZFm8QMzlirp0z+1K36xi35MJdtI=', 'ADMINISTRADOR'),
+    ('Operador', 'operador@fabricx.com', 'PBKDF2-SHA256$210000$tDXJoPEDDpLfnLpwF8FSOQ==$dGNu1vgXQfSaLiAT7J/ft8QxUjxFIGsnZSi5KAhAwfQ=', 'OPERADOR');
