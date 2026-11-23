@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<ItemEstrutura> ItensEstrutura => Set<ItemEstrutura>();
     public DbSet<OrdemProducao> OrdensProducao => Set<OrdemProducao>();
     public DbSet<Recurso> Recursos => Set<Recurso>();
+    public DbSet<RoteiroEtapa> EtapasRoteiro => Set<RoteiroEtapa>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

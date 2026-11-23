@@ -74,6 +74,10 @@ Endpoints atuais:
 | POST | `/api/produtos/{id}/estrutura` | Adiciona componente (recusa par repetido e ciclo) |
 | PUT | `/api/produtos/{id}/estrutura/{componenteId}` | Altera a quantidade do componente |
 | DELETE | `/api/produtos/{id}/estrutura/{componenteId}` | Remove o componente |
+| GET | `/api/produtos/{id}/roteiro` | Etapas do roteiro, por sequência |
+| POST | `/api/produtos/{id}/roteiro` | Adiciona etapa (recurso ativo, sequência única, ciclo e unidades por ciclo) |
+| PUT | `/api/produtos/{id}/roteiro/{etapaId}` | Altera a etapa |
+| DELETE | `/api/produtos/{id}/roteiro/{etapaId}` | Remove a etapa |
 | GET | `/api/recursos` | Lista recursos |
 | GET | `/api/recursos/{id}` | Busca recurso por id |
 | POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |
