@@ -359,4 +359,53 @@ public class RecursosControllerTests : IClassFixture<ApiFactory>
         Assert.Equal(5, dados.GetProperty("ordensPorStatus").GetArrayLength());
         Assert.Equal(JsonValueKind.Array, dados.GetProperty("produtosComEstoqueBaixo").ValueKind);
     }
+
+    private Task<HttpResponseMessage> CriarDemandaAsync(int produtoId, string periodo, double quantidade = 600) =>
+        _cliente.PostAsJsonAsync("/api/demanda-prevista", new { produtoId, periodo, quantidade });
+
+    [Fact]
+    public async Task Demanda_CriaListaAlteraERemove_EValidaDuplicidadeEPeriodo()
+    {
+        var produto = await CriarProdutoAsync();
+        var periodo = "2031-05";
+
+        var criada = await CriarDemandaAsync(produto, periodo);
+        Assert.Equal(HttpStatusCode.Created, criada.StatusCode);
+        var id = (await LerAsync(criada)).GetProperty("data").GetProperty("id").GetInt32();
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await CriarDemandaAsync(produto, periodo)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await CriarDemandaAsync(produto, "2031-13")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await CriarDemandaAsync(999999, periodo)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _cliente.GetAsync("/api/demanda-prevista?periodo=maio")).StatusCode);
+
+        var lista = (await LerAsync(await _cliente.GetAsync($"/api/demanda-prevista?periodo={periodo}"))).GetProperty("data").EnumerateArray().ToList();
+        Assert.Contains(lista, d => d.GetProperty("id").GetInt32() == id);
+
+        var alterada = await _cliente.PutAsJsonAsync($"/api/demanda-prevista/{id}", new { periodo, quantidade = 900 });
+        Assert.Equal(900, (await LerAsync(alterada)).GetProperty("data").GetProperty("quantidade").GetDouble());
+
+        Assert.Equal(HttpStatusCode.OK, (await _cliente.DeleteAsync($"/api/demanda-prevista/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _cliente.DeleteAsync($"/api/demanda-prevista/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Capacidade_MostraDemandaProgramacaoEClassificacaoPorRecurso()
+    {
+        var kit = await CriarProdutoAsync();
+        var linha = await CriarAsync(NomeUnico(), 8);
+        await _cliente.PostAsJsonAsync($"/api/produtos/{kit}/roteiro",
+            new { recursoId = linha, sequencia = 1, nome = "Embalagem", tempoCicloMin = 2, unidadesPorCiclo = 1 });
+        await CriarDemandaAsync(kit, "2032-01", 8000);
+
+        var resposta = await _cliente.GetAsync("/api/capacidade?periodo=2032-01");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        var dados = (await LerAsync(resposta)).GetProperty("data");
+        Assert.Equal(31, dados.GetProperty("diasNoPeriodo").GetInt32());
+        var item = dados.GetProperty("recursos").EnumerateArray().Single(r => r.GetProperty("recursoId").GetInt32() == linha);
+        Assert.Equal(248, item.GetProperty("capacidadeHorasPeriodo").GetDouble());
+        Assert.Equal(16000.0 / 60, item.GetProperty("horasNecessariasDemanda").GetDouble(), 6);
+        Assert.Equal("Gargalo", item.GetProperty("classificacao").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await _cliente.GetAsync("/api/capacidade?periodo=2032-99")).StatusCode);
+    }
 }

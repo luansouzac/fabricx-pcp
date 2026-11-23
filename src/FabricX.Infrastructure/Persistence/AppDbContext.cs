@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Recurso> Recursos => Set<Recurso>();
     public DbSet<Programacao> Programacoes => Set<Programacao>();
     public DbSet<Apontamento> Apontamentos => Set<Apontamento>();
+    public DbSet<DemandaPrevista> DemandasPrevistas => Set<DemandaPrevista>();
     public DbSet<RoteiroEtapa> EtapasRoteiro => Set<RoteiroEtapa>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

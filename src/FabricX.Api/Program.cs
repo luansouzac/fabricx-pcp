@@ -39,6 +39,8 @@ builder.Services.AddScoped<IRecursoService, RecursoService>();
 builder.Services.AddScoped<IProgramacaoService, ProgramacaoService>();
 builder.Services.AddScoped<IApontamentoService, ApontamentoService>();
 builder.Services.AddScoped<IIndicadorService, IndicadorService>();
+builder.Services.AddScoped<IDemandaPrevistaService, DemandaPrevistaService>();
+builder.Services.AddScoped<ICapacidadeService, CapacidadeService>();
 builder.Services.AddScoped<IRoteiroService, RoteiroService>();
 
 var app = builder.Build();
