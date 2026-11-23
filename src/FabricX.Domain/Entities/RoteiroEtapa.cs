@@ -23,6 +23,7 @@ public class RoteiroEtapa
             throw new DomainException("O produto da etapa é obrigatório.");
 
         ProdutoId = produtoId;
+        Nome = string.Empty;
         Atualizar(recursoId, sequencia, nome, tempoCicloMin, unidadesPorCiclo);
     }
 
