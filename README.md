@@ -68,6 +68,10 @@ Endpoints atuais:
 | PUT | `/api/produtos/{id}` | Atualiza produto |
 | POST | `/api/produtos/{id}/movimentacoes` | Entrada ou saída de estoque, com motivo opcional |
 | GET | `/api/produtos/{id}/movimentacoes` | Histórico de movimentações, da mais recente para a mais antiga |
+| GET | `/api/produtos/{id}/estrutura` | Componentes do produto, com código, nome e quantidade |
+| POST | `/api/produtos/{id}/estrutura` | Adiciona componente (recusa par repetido e ciclo) |
+| PUT | `/api/produtos/{id}/estrutura/{componenteId}` | Altera a quantidade do componente |
+| DELETE | `/api/produtos/{id}/estrutura/{componenteId}` | Remove o componente |
 | DELETE | `/api/produtos/{id}` | Inativa produto |
 
 Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode`.

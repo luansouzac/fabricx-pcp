@@ -246,4 +246,106 @@ public class ProdutosControllerTests : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
     }
+
+    private async Task<int> CriarComTipoAsync(string codigo, string nome, string tipo)
+    {
+        var resposta = await _cliente.PostAsJsonAsync("/api/produtos", new { codigo, nome, tipo, unidadeMedida = "UN" });
+        return (await LerAsync(resposta)).GetProperty("data").GetProperty("id").GetInt32();
+    }
+
+    private Task<HttpResponseMessage> AdicionarComponenteAsync(int paiId, int componenteId, double quantidade = 1) =>
+        _cliente.PostAsJsonAsync($"/api/produtos/{paiId}/estrutura", new { componenteId, quantidade });
+
+    [Fact]
+    public async Task Estrutura_AdicionaEListaComCodigoENomeDoComponente()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        var codigo = CodigoUnico();
+        var componente = await CriarComTipoAsync(codigo, "Tampinha", "MateriaPrima");
+
+        var criado = await AdicionarComponenteAsync(pai, componente, 2);
+
+        Assert.Equal(HttpStatusCode.Created, criado.StatusCode);
+        var lista = (await LerAsync(await _cliente.GetAsync($"/api/produtos/{pai}/estrutura"))).GetProperty("data").EnumerateArray().ToList();
+        var item = Assert.Single(lista);
+        Assert.Equal(codigo, item.GetProperty("componenteCodigo").GetString());
+        Assert.Equal("Tampinha", item.GetProperty("componenteNome").GetString());
+        Assert.Equal(2, item.GetProperty("quantidade").GetDouble());
+    }
+
+    [Fact]
+    public async Task Estrutura_ParRepetido_Retorna400()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        var componente = await CriarComTipoAsync(CodigoUnico(), "Tampinha", "MateriaPrima");
+        await AdicionarComponenteAsync(pai, componente);
+
+        var resposta = await AdicionarComponenteAsync(pai, componente);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Estrutura_ComponenteInexistente_Retorna404()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+
+        var resposta = await AdicionarComponenteAsync(pai, 999999);
+
+        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Estrutura_QuantidadeZero_Retorna400()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        var componente = await CriarComTipoAsync(CodigoUnico(), "Tampinha", "MateriaPrima");
+
+        var resposta = await AdicionarComponenteAsync(pai, componente, 0);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Estrutura_Ciclo_Retorna400ComMensagemClara()
+    {
+        var tampinha = await CriarComTipoAsync(CodigoUnico(), "Tampinha", "MateriaPrima");
+        var garrafaDagua = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        var kit = await CriarComTipoAsync(CodigoUnico(), "Kit", "Acabado");
+        await AdicionarComponenteAsync(garrafaDagua, tampinha);
+        await AdicionarComponenteAsync(kit, garrafaDagua, 6);
+
+        var resposta = await AdicionarComponenteAsync(tampinha, kit);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        var mensagem = (await LerAsync(resposta)).GetProperty("message").GetString();
+        Assert.Equal("A estrutura formaria um ciclo: Tampinha → Kit → Garrafa d'água → Tampinha", mensagem);
+    }
+
+    [Fact]
+    public async Task Estrutura_AlteraQuantidadeERemove()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+        var componente = await CriarComTipoAsync(CodigoUnico(), "Tampinha", "MateriaPrima");
+        await AdicionarComponenteAsync(pai, componente);
+
+        var alterada = await _cliente.PutAsJsonAsync($"/api/produtos/{pai}/estrutura/{componente}", new { quantidade = 5 });
+        Assert.Equal(HttpStatusCode.OK, alterada.StatusCode);
+        Assert.Equal(5, (await LerAsync(alterada)).GetProperty("data").GetProperty("quantidade").GetDouble());
+
+        var removida = await _cliente.DeleteAsync($"/api/produtos/{pai}/estrutura/{componente}");
+        Assert.Equal(HttpStatusCode.OK, removida.StatusCode);
+        var lista = await LerAsync(await _cliente.GetAsync($"/api/produtos/{pai}/estrutura"));
+        Assert.Empty(lista.GetProperty("data").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Estrutura_RemoverItemInexistente_Retorna404()
+    {
+        var pai = await CriarComTipoAsync(CodigoUnico(), "Garrafa d'água", "Acabado");
+
+        var resposta = await _cliente.DeleteAsync($"/api/produtos/{pai}/estrutura/999999");
+
+        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
 }
