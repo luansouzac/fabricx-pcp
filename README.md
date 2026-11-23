@@ -53,9 +53,9 @@ Pare a API antes de apagar o arquivo.
 
 ## Testar os endpoints
 
-Abra `teste-api.html` no navegador com a API rodando. A página tem um formulário para cada endpoint de `/api/produtos` e uma requisição livre. A URL base é editável no topo.
+Suba a API com o perfil `http` (`dotnet run --project src/FabricX.Api --launch-profile http`) e abra http://localhost:5168/swagger. O Swagger UI lista todos os endpoints e executa as requisições. O JSON da especificação fica em `/openapi/v1.json`.
 
-Em Development a API libera CORS para qualquer origem, o que permite abrir o HTML direto do disco.
+O Swagger UI só existe em Development.
 
 Endpoints atuais:
 
