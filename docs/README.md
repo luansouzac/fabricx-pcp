@@ -6,6 +6,7 @@
 | [02-plano.md](02-plano.md) | Plano do projeto, arquitetura e decisões |
 | [03-entidades-e-relacionamentos.md](03-entidades-e-relacionamentos.md) | Entidades, relacionamentos e DER |
 | [04-skills.md](04-skills.md) | Skills do Claude Code usadas no projeto |
+| [processo-unificado/](processo-unificado/01-iniciacao.md) | Documentação das quatro fases do Processo Unificado (Iniciação, Elaboração, Construção, Transição) |
 | [conceitos/](conceitos/README.md) | Conceitos e arquiteturas da disciplina, destilados dos PDFs do professor |
 | [der/der.mmd](der/der.mmd) | Fonte do DER (Mermaid) |
 

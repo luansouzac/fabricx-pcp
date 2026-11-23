@@ -40,7 +40,9 @@ Use o perfil `http`. O perfil `https` exige o certificado de desenvolvimento (`d
 
 O banco é o arquivo `src/FabricX.Api/fabricx.db`, criado na primeira execução (está no `.gitignore`). Na primeira execução a API cria as tabelas com `database/script.sql`. Quando o ambiente é Development, ela também carrega os dados de exemplo de `database/seed.sql`.
 
-O seed só roda quando o banco é criado do zero. Ele traz 7 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 4 recursos e movimentações iniciais.
+O seed só roda quando o banco é criado do zero. Ele traz 11 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 6 recursos, roteiros e movimentações iniciais. O exemplo da garrafa tem três níveis: tampinha e garrafa formam a garrafa d'água (`EP-003`, montadora, ciclo de 2 min para 10 unidades), e 6 garrafas d'água formam o kit (`PA-003`, linha de embalagem, 2 min por unidade).
+
+O script e o seed só rodam quando o banco é criado do zero. Quem já tem o `fabricx.db`, ou o volume `fabricx-data` do Docker, precisa recriá-lo para receber a coluna nova do roteiro e o exemplo da garrafa.
 
 Para resetar o banco e recarregar o seed:
 
@@ -53,9 +55,9 @@ Pare a API antes de apagar o arquivo.
 
 ## Testar os endpoints
 
-Abra `teste-api.html` no navegador com a API rodando. A página tem um formulário para cada endpoint de `/api/produtos` e uma requisição livre. A URL base é editável no topo.
+Suba a API com o perfil `http` (`dotnet run --project src/FabricX.Api --launch-profile http`) e abra http://localhost:5168/swagger. O Swagger UI lista todos os endpoints e executa as requisições. O JSON da especificação fica em `/openapi/v1.json`.
 
-Em Development a API libera CORS para qualquer origem, o que permite abrir o HTML direto do disco.
+O Swagger UI só existe em Development.
 
 Endpoints atuais:
 
@@ -72,6 +74,30 @@ Endpoints atuais:
 | POST | `/api/produtos/{id}/estrutura` | Adiciona componente (recusa par repetido e ciclo) |
 | PUT | `/api/produtos/{id}/estrutura/{componenteId}` | Altera a quantidade do componente |
 | DELETE | `/api/produtos/{id}/estrutura/{componenteId}` | Remove o componente |
+| GET | `/api/produtos/{id}/roteiro` | Etapas do roteiro, por sequência |
+| POST | `/api/produtos/{id}/roteiro` | Adiciona etapa (recurso ativo, sequência única, ciclo e unidades por ciclo) |
+| PUT | `/api/produtos/{id}/roteiro/{etapaId}` | Altera a etapa |
+| DELETE | `/api/produtos/{id}/roteiro/{etapaId}` | Remove a etapa |
+| POST | `/api/ordens-producao/{id}/programacao` | Programa uma etapa da ordem (início informado, fim calculado, sem sobreposição e dentro da capacidade) |
+| GET | `/api/ordens-producao/{id}/programacao` | Etapas programadas da ordem |
+| GET | `/api/programacao?recursoId=&de=&ate=` | Cronograma por recurso e período, ordenado por início |
+| PUT | `/api/programacao/{id}` | Reprograma (só enquanto agendada) |
+| DELETE | `/api/programacao/{id}` | Remove (só enquanto agendada) |
+| POST | `/api/programacao/{id}/apontamentos` | Aponta produção real (produzida, defeituosa, tempo gasto) |
+| GET | `/api/programacao/{id}/apontamentos` | Apontamentos da programação |
+| GET | `/api/ordens-producao/{id}/apontamentos` | Apontamentos da ordem |
+| GET | `/api/indicadores?de=&ate=&produtoId=&recursoId=` | Qualidade, eficiência, produtividade e cumprimento de prazo |
+| GET | `/api/indicadores/resumo` | Resumo para o dashboard: ordens por status, estoque baixo e indicadores |
+| GET | `/api/demanda-prevista?periodo=AAAA-MM` | Demanda prevista por produto e mês |
+| POST | `/api/demanda-prevista` | Cria demanda prevista (um registro por produto e período) |
+| PUT | `/api/demanda-prevista/{id}` | Altera período e quantidade |
+| DELETE | `/api/demanda-prevista/{id}` | Remove a demanda |
+| GET | `/api/capacidade?periodo=AAAA-MM` | Capacidade x demanda por recurso, com gargalo e ociosidade |
+| GET | `/api/recursos` | Lista recursos |
+| GET | `/api/recursos/{id}` | Busca recurso por id |
+| POST | `/api/recursos` | Cria recurso (nome único, capacidade em h/dia maior que zero) |
+| PUT | `/api/recursos/{id}` | Atualiza recurso |
+| DELETE | `/api/recursos/{id}` | Inativa recurso (não apaga) |
 | GET | `/api/ordens-producao?status=` | Lista ordens, com filtro opcional por status |
 | GET | `/api/ordens-producao/{id}` | Busca ordem por id |
 | POST | `/api/ordens-producao` | Cria ordem (número gerado, valida saldo dos componentes) |

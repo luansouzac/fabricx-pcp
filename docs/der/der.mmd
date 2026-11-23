@@ -43,7 +43,8 @@ erDiagram
         INTEGER recurso_id FK
         INTEGER sequencia
         TEXT nome
-        REAL tempo_unitario_min
+        REAL tempo_ciclo_min
+        INTEGER unidades_por_ciclo "padrao 1"
     }
     ORDEM_PRODUCAO {
         INTEGER id PK

@@ -18,6 +18,11 @@ public static class DependencyInjection
         services.AddScoped<IOrdemProducaoRepository, OrdemProducaoRepository>();
         services.AddScoped<IErpGateway, ErpGatewaySimulado>();
         services.AddScoped<ISgqGateway, SgqGatewaySimulado>();
+        services.AddScoped<IRecursoRepository, RecursoRepository>();
+        services.AddScoped<IProgramacaoRepository, ProgramacaoRepository>();
+        services.AddScoped<IApontamentoRepository, ApontamentoRepository>();
+        services.AddScoped<IDemandaPrevistaRepository, DemandaPrevistaRepository>();
+        services.AddScoped<IRoteiroEtapaRepository, RoteiroEtapaRepository>();
         return services;
     }
 }

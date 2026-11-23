@@ -36,6 +36,13 @@ builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
 builder.Services.AddScoped<IIntegracaoService, IntegracaoService>();
+builder.Services.AddScoped<IRecursoService, RecursoService>();
+builder.Services.AddScoped<IProgramacaoService, ProgramacaoService>();
+builder.Services.AddScoped<IApontamentoService, ApontamentoService>();
+builder.Services.AddScoped<IIndicadorService, IndicadorService>();
+builder.Services.AddScoped<IDemandaPrevistaService, DemandaPrevistaService>();
+builder.Services.AddScoped<ICapacidadeService, CapacidadeService>();
+builder.Services.AddScoped<IRoteiroService, RoteiroService>();
 
 var app = builder.Build();
 
@@ -51,6 +58,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(opcoes => opcoes.SwaggerEndpoint("/openapi/v1.json", "FabricX API v1"));
     app.UseCors("Desenvolvimento");
 }
 
