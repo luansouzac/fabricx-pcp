@@ -5,6 +5,7 @@ using FabricX.Application.Interfaces;
 using FabricX.Application.Services;
 using FabricX.Infrastructure;
 using FabricX.Infrastructure.Persistence;
+using FabricX.Infrastructure.Seguranca;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,13 @@ builder.Services
         };
     });
 
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.Secao))
+    .Validate(o => o.Chave.Length >= JwtOptions.TamanhoMinimoDaChave, $"Jwt:Chave deve ter ao menos {JwtOptions.TamanhoMinimoDaChave} caracteres e vir de configuração (variável Jwt__Chave).")
+    .Validate(o => o.Emissor.Length > 0 && o.Audiencia.Length > 0, "Jwt:Emissor e Jwt:Audiencia são obrigatórios.")
+    .Validate(o => o.ExpiraEmMinutos > 0, "Jwt:ExpiraEmMinutos deve ser maior que zero.")
+    .ValidateOnStart();
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica =>
@@ -32,6 +40,7 @@ builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica 
 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();

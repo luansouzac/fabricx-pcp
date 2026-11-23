@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IRoteiroEtapaRepository, RoteiroEtapaRepository>();
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddSingleton<ISenhaHasher, SenhaHasherPbkdf2>();
+        services.AddSingleton<IGeradorDeToken, GeradorDeTokenJwt>();
         return services;
     }
 }

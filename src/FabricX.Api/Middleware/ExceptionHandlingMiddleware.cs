@@ -25,6 +25,10 @@ public class ExceptionHandlingMiddleware
         {
             await Write(context, WebResponse<object>.Failure(ex.Message, StatusCodes.Status400BadRequest));
         }
+        catch (NaoAutorizadoException ex)
+        {
+            await Write(context, WebResponse<object>.Failure(ex.Message, StatusCodes.Status401Unauthorized));
+        }
         catch (NotFoundException ex)
         {
             await Write(context, WebResponse<object>.Failure(ex.Message, StatusCodes.Status404NotFound));
