@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import LoginView from '../views/LoginView.vue'
 import InicioView from '../views/InicioView.vue'
 import ProdutosView from '../views/ProdutosView.vue'
 import ProdutoFormView from '../views/ProdutoFormView.vue'
@@ -10,6 +12,7 @@ import OrdemFormView from '../views/OrdemFormView.vue'
 import OrdemDetalheView from '../views/OrdemDetalheView.vue'
 
 const routes = [
+  { path: '/login', name: 'login', component: LoginView, meta: { titulo: 'Entrar', publica: true } },
   { path: '/', name: 'inicio', component: InicioView, meta: { titulo: 'Início' } },
   { path: '/produtos', name: 'produtos', component: ProdutosView, meta: { titulo: 'Produtos' } },
   { path: '/produtos/novo', name: 'produto-novo', component: ProdutoFormView, meta: { titulo: 'Novo produto' } },
@@ -57,6 +60,16 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  if (!to.meta.publica && !auth.logado) {
+    auth.sair()
+    return { name: 'login', query: to.fullPath === '/' ? undefined : { redirect: to.fullPath } }
+  }
+  if (to.name === 'login' && auth.logado) return { name: 'inicio' }
 })
 
 router.afterEach((to) => {

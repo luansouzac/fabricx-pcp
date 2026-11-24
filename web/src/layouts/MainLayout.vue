@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import logoClaro from '../assets/logo/fabricx-horizontal-claro.svg'
 import logoEscuro from '../assets/logo/fabricx-horizontal-escuro.svg'
 
@@ -11,6 +13,8 @@ const itensMenu = [
   { titulo: 'Ordens de produção', icone: 'mdi-clipboard-text-outline', rota: '/ordens' },
 ]
 
+const auth = useAuthStore()
+const router = useRouter()
 const theme = useTheme()
 const escuro = computed(() => theme.current.value.dark)
 const logo = computed(() => (escuro.value ? logoEscuro : logoClaro))
@@ -19,6 +23,11 @@ function alternarTema() {
   const novo = escuro.value ? 'fabricx' : 'fabricxDark'
   theme.change(novo)
   localStorage.setItem('fx-tema', novo)
+}
+
+function sair() {
+  auth.sair()
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -42,6 +51,7 @@ function alternarTema() {
 
   <v-app-bar height="56">
     <v-spacer />
+    <span class="fx-legenda mr-2">{{ auth.usuario?.nome }}</span>
     <v-btn
       :icon="escuro ? 'mdi-weather-sunny' : 'mdi-weather-night'"
       variant="text"
@@ -49,6 +59,14 @@ function alternarTema() {
       class="mr-2"
       :aria-label="escuro ? 'Usar tema claro' : 'Usar tema escuro'"
       @click="alternarTema"
+    />
+    <v-btn
+      icon="mdi-logout"
+      variant="text"
+      color="secondary"
+      class="mr-2"
+      aria-label="Sair"
+      @click="sair"
     />
   </v-app-bar>
 

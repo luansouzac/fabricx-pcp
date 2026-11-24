@@ -1,4 +1,6 @@
 import { useNotificacoesStore } from '../stores/notificacoes'
+import { useAuthStore } from '../stores/auth'
+import router from '../router'
 
 const URL_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5168'
 
@@ -31,14 +33,19 @@ async function lerEnvelope(resposta) {
   }
 }
 
-async function requisitar(metodo, caminho, { corpo, mensagemSucesso } = {}) {
+async function requisitar(metodo, caminho, { corpo, mensagemSucesso, publica = false } = {}) {
   const notificacoes = useNotificacoesStore()
+  const auth = useAuthStore()
+
+  const headers = {}
+  if (corpo !== undefined) headers['Content-Type'] = 'application/json'
+  if (!publica && auth.token) headers.Authorization = `Bearer ${auth.token}`
 
   let resposta
   try {
     resposta = await fetch(`${URL_BASE}${caminho}`, {
       method: metodo,
-      headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers,
       body: corpo === undefined ? undefined : JSON.stringify(corpo),
     })
   } catch {
@@ -49,6 +56,13 @@ async function requisitar(metodo, caminho, { corpo, mensagemSucesso } = {}) {
 
   /** @type {WebResponse} */
   const envelope = await lerEnvelope(resposta)
+
+  if (resposta.status === 401 && !publica) {
+    auth.sair()
+    notificacoes.erro('Sua sessão expirou. Entre novamente.')
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+    throw new ApiError('Sessão expirada.', 401)
+  }
 
   if (!envelope.isSuccess) {
     const erro = new ApiError(envelope.message ?? 'Erro desconhecido.', envelope.statusCode)
