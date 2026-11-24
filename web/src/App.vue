@@ -5,7 +5,8 @@ import NotificacaoToast from './components/NotificacaoToast.vue'
 
 <template>
   <v-app>
-    <MainLayout />
+    <router-view v-if="$route.meta.publica" />
+    <MainLayout v-else />
     <NotificacaoToast />
   </v-app>
 </template>
