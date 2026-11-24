@@ -10,6 +10,8 @@ import RecursoFormView from '../views/RecursoFormView.vue'
 import OrdensView from '../views/OrdensView.vue'
 import OrdemFormView from '../views/OrdemFormView.vue'
 import OrdemDetalheView from '../views/OrdemDetalheView.vue'
+import DemandasView from '../views/DemandasView.vue'
+import DemandaFormView from '../views/DemandaFormView.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { titulo: 'Entrar', publica: true } },
@@ -68,6 +70,20 @@ const routes = [
     component: OrdemFormView,
     props: true,
     meta: { titulo: 'Editar ordem' },
+  },
+  { path: '/demanda-prevista', name: 'demandas', component: DemandasView, meta: { titulo: 'Demanda prevista' } },
+  {
+    path: '/demanda-prevista/nova',
+    name: 'demanda-nova',
+    component: DemandaFormView,
+    meta: { titulo: 'Nova demanda prevista' },
+  },
+  {
+    path: '/demanda-prevista/:id(\\d+)/editar',
+    name: 'demanda-editar',
+    component: DemandaFormView,
+    props: true,
+    meta: { titulo: 'Editar demanda prevista' },
   },
 ]
 
