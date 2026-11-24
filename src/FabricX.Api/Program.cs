@@ -69,10 +69,21 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
+builder.Services.AddRateLimiter(opcoes => Limitador.Configurar(opcoes, builder.Configuration.GetValue("RateLimit:LoginPorMinuto", 5)));
+
 builder.Services.AddOpenApi(opcoes => opcoes.AddDocumentTransformer<BearerOpenApiTransformer>());
 
-builder.Services.AddCors(opcoes => opcoes.AddPolicy("Desenvolvimento", politica =>
-    politica.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+var origensPermitidas = builder.Configuration.GetSection("Cors:Origens").Get<string[]>() ?? [];
+
+builder.Services.AddCors(opcoes => opcoes.AddPolicy("Front", politica =>
+{
+    if (origensPermitidas.Length > 0)
+        politica.WithOrigins(origensPermitidas);
+    else if (builder.Environment.IsDevelopment())
+        politica.AllowAnyOrigin();
+
+    politica.AllowAnyHeader().AllowAnyMethod();
+}));
 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
@@ -105,12 +116,14 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
     app.UseSwaggerUI(opcoes => opcoes.SwaggerEndpoint("/openapi/v1.json", "FabricX API v1"));
-    app.UseCors("Desenvolvimento");
 }
+
+app.UseCors("Front");
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

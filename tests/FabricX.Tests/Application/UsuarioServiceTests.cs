@@ -76,4 +76,32 @@ public class UsuarioServiceTests
         await Assert.ThrowsAsync<NotFoundException>(() =>
             _service.AtualizarAsync(99, new AtualizarUsuarioDto { Nome = "X", Perfil = PerfilUsuario.Operador }, Ct));
     }
+
+    [Fact]
+    public async Task Inativar_UnicoAdministradorAtivo_LancaDomainException()
+    {
+        var admin = await _service.CriarAsync(Dto(perfil: PerfilUsuario.Administrador), Ct);
+
+        await Assert.ThrowsAsync<DomainException>(() => _service.InativarAsync(admin.Id, Ct));
+    }
+
+    [Fact]
+    public async Task Atualizar_RebaixandoOUnicoAdministrador_LancaDomainException()
+    {
+        var admin = await _service.CriarAsync(Dto(perfil: PerfilUsuario.Administrador), Ct);
+
+        await Assert.ThrowsAsync<DomainException>(() =>
+            _service.AtualizarAsync(admin.Id, new AtualizarUsuarioDto { Nome = "Ana", Perfil = PerfilUsuario.Operador }, Ct));
+    }
+
+    [Fact]
+    public async Task Inativar_AdministradorQuandoHaOutroAtivo_Funciona()
+    {
+        var primeiro = await _service.CriarAsync(Dto("a@fabricx.com", PerfilUsuario.Administrador), Ct);
+        await _service.CriarAsync(Dto("b@fabricx.com", PerfilUsuario.Administrador), Ct);
+
+        var inativado = await _service.InativarAsync(primeiro.Id, Ct);
+
+        Assert.False(inativado.Ativo);
+    }
 }

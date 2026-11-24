@@ -105,7 +105,7 @@ public class ProtecaoJwtTests : IClassFixture<ApiFactory>
     {
         var cliente = _fabrica.CreateClient();
         var email = $"u{Guid.NewGuid():N}@fabricx.com";
-        await cliente.PostAsJsonAsync("/api/auth/registro", new { nome = "Maria", email, senha = "Senha@123" });
+        _fabrica.CriarUsuario(email, "Senha@123", PerfilUsuario.Operador);
         var login = await cliente.PostAsJsonAsync("/api/auth/login", new { email, senha = "Senha@123" });
         var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("data").GetProperty("token").GetString()!;
 
@@ -174,15 +174,25 @@ public class ProtecaoJwtTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task LoginERegistro_SaoPublicos()
+    public async Task TokenDeUsuarioInativado_PassaASerRejeitadoAntesDeExpirar()
+    {
+        var usuario = _fabrica.CriarUsuario($"u{Guid.NewGuid():N}@fabricx.com", "Senha@123", PerfilUsuario.Operador);
+        var token = _fabrica.CriarClienteAutenticadoComo(usuario);
+        Assert.Equal(HttpStatusCode.OK, (await token.GetAsync("/api/produtos")).StatusCode);
+
+        await _fabrica.CriarClienteAutenticado(PerfilUsuario.Administrador).DeleteAsync($"/api/usuarios/{usuario.Id}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await token.GetAsync("/api/produtos")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_EhOUnicoEndpointPublico()
     {
         var cliente = _fabrica.CreateClient();
 
         var login = await cliente.PostAsJsonAsync("/api/auth/login", new { email = "x@y.com", senha = "qualquer" });
-        var registro = await cliente.PostAsJsonAsync("/api/auth/registro", new { nome = "", email = "", senha = "" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, registro.StatusCode);
     }
 
     [Fact]

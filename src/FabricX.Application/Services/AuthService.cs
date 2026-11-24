@@ -11,6 +11,9 @@ public class AuthService : IAuthService
 {
     private const string MensagemCredenciaisInvalidas = "E-mail ou senha inválidos.";
 
+    // Hash válido de uma senha qualquer: e-mail inexistente também paga o custo do PBKDF2, e o tempo não revela quais e-mails existem.
+    private const string HashFicticio = "PBKDF2-SHA256$210000$tDXJoPEDDpLfnLpwF8FSOQ==$dGNu1vgXQfSaLiAT7J/ft8QxUjxFIGsnZSi5KAhAwfQ=";
+
     private readonly IUsuarioRepository _repositorio;
     private readonly ISenhaHasher _hasher;
     private readonly IGeradorDeToken _gerador;
@@ -22,22 +25,13 @@ public class AuthService : IAuthService
         _gerador = gerador;
     }
 
-    public async Task<UsuarioDto> RegistrarAsync(RegistrarUsuarioDto dto, CancellationToken cancellationToken)
-    {
-        var usuario = new Usuario(dto.Nome!, dto.Email!, _hasher.Gerar(dto.Senha!), PerfilUsuario.Operador);
-
-        if (await _repositorio.ObterPorEmailAsync(usuario.Email, cancellationToken) is not null)
-            throw new DomainException($"Já existe um usuário com o e-mail {usuario.Email}.");
-
-        await _repositorio.AdicionarAsync(usuario, cancellationToken);
-        return UsuarioDto.De(usuario);
-    }
-
     public async Task<TokenDto> LoginAsync(LoginDto dto, CancellationToken cancellationToken)
     {
         var usuario = await _repositorio.ObterPorEmailAsync(dto.Email!.Trim().ToLowerInvariant(), cancellationToken);
 
-        if (usuario is null || !usuario.Ativo || !_hasher.Verificar(dto.Senha!, usuario.SenhaHash))
+        var senhaConfere = _hasher.Verificar(dto.Senha!, usuario?.SenhaHash ?? HashFicticio);
+
+        if (usuario is null || !usuario.Ativo || !senhaConfere)
             throw new NaoAutorizadoException(MensagemCredenciaisInvalidas);
 
         var token = _gerador.Gerar(usuario);

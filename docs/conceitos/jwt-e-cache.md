@@ -45,9 +45,12 @@ A validação é **sem estado**: a API não consulta o banco a cada requisição
 | Mensagem de erro do login | A mesma para e-mail inexistente, senha errada e usuário inativo | Não revela quais e-mails existem |
 | Status do login inválido | 401 (`NaoAutorizadoException`), não 400 | 400 é erro de regra de negócio; credencial inválida é falha de autenticação |
 | Onde fica cada peça | `ISenhaHasher` e `IGeradorDeToken` na Application, implementações na Infrastructure | Services não conhecem biblioteca de criptografia nem de JWT, e os testes usam as implementações reais sem banco |
-| Política padrão | Todo endpoint exige usuário autenticado (`FallbackPolicy`); só login e registro têm `[AllowAnonymous]` | Esquecer um `[Authorize]` deixa a rota fechada, não aberta |
+| Política padrão | Todo endpoint exige usuário autenticado (`FallbackPolicy`); só o login tem `[AllowAnonymous]` | Esquecer um `[Authorize]` deixa a rota fechada, não aberta |
 | Perfis | `Administrador` gerencia usuários e inativa produto e recurso; `Operador` faz o restante | O enunciado pede autenticação **e autorização** |
-| Registro público | Cria sempre `Operador`. Administrador só nasce pelo seed ou por outro administrador | Evita que qualquer um se cadastre como administrador |
+| Sem cadastro público | Só um administrador cria usuários; o sistema recusa inativar ou rebaixar o último administrador ativo | Ninguém entra sem ser autorizado, e o sistema não fica sem administrador |
+| Sessão revalidada | `OnTokenValidated` consulta o usuário a cada requisição e rejeita inativo ou inexistente | Inativar derruba o acesso na hora, sem esperar o token expirar |
+| Login uniforme | E-mail inexistente também executa o PBKDF2, contra um hash fictício | O tempo de resposta não revela quais e-mails existem |
+| Limite no login | Janela fixa de 1 minuto por IP (`RateLimit:LoginPorMinuto`, padrão 5), 429 no formato `WebResponse<T>` | Freia tentativa de adivinhar senha |
 | Chave | `Jwt__Chave` por variável de ambiente ou `appsettings.Development.json` (só desenvolvimento). A API se recusa a subir sem chave de pelo menos 32 caracteres | O enunciado exige configuração sensível fora do código-fonte |
 | `MapInboundClaims = false` | Claims chegam com o nome do token (`role`, `sub`) | Sem isso o framework renomeia `role` e a checagem de perfil falha |
 
@@ -64,7 +67,7 @@ Cache em memória (`IMemoryCache`) nas consultas que somam muitas linhas e mudam
 
 Chave por consulta: os filtros fazem parte da chave (`indicadores:de:ate:produtoId:recursoId`, `capacidade:AAAA-MM`). Duas consultas com filtros diferentes não se misturam.
 
-Invalidação: um filtro de ação (`InvalidarCacheAposEscritaFilter`) chama `InvalidarTudo()` quando a requisição não é de leitura e termina com sucesso. Escolha deliberada: os indicadores dependem de ordens, programação, apontamentos, estoque e demanda, então quase qualquer escrita pode mudá-los. Invalidar tudo é simples e nunca devolve dado velho; um cache com invalidação seletiva por entidade ganharia pouco neste volume e exigiria mapear cada dependência. Login, registro e gestão de usuários não invalidam, porque não afetam as consultas.
+Invalidação: um filtro de ação (`InvalidarCacheAposEscritaFilter`) chama `InvalidarTudo()` quando a requisição não é de leitura e termina com sucesso. Escolha deliberada: os indicadores dependem de ordens, programação, apontamentos, estoque e demanda, então quase qualquer escrita pode mudá-los. Invalidar tudo é simples e nunca devolve dado velho; um cache com invalidação seletiva por entidade ganharia pouco neste volume e exigiria mapear cada dependência. Login e gestão de usuários não invalidam, porque não afetam as consultas.
 
 Implementação: `CacheDeConsultasMemoria` guarda cada valor com expiração absoluta e um token de cancelamento compartilhado. `InvalidarTudo()` cancela o token e cria outro, expirando todas as entradas de uma vez. Se uma escrita acontece enquanto uma consulta está sendo calculada, o valor calculado já nasce expirado e não fica velho no cache.
 
@@ -76,7 +79,7 @@ Limites assumidos: o cache vive no processo (uma instância da API). Com várias
 |---|---|
 | Geração do token | `src/FabricX.Infrastructure/Seguranca/GeradorDeTokenJwt.cs` |
 | Hash de senha | `src/FabricX.Infrastructure/Seguranca/SenhaHasherPbkdf2.cs` |
-| Login e cadastro | `src/FabricX.Application/Services/AuthService.cs` |
+| Login | `src/FabricX.Application/Services/AuthService.cs` |
 | Validação do token e política padrão | `src/FabricX.Api/Program.cs` |
 | 401 e 403 no envelope | `src/FabricX.Api/Common/RespostasDeAutenticacao.cs` |
 | Bearer no Swagger | `src/FabricX.Api/Common/BearerOpenApiTransformer.cs` |

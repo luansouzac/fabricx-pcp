@@ -1,8 +1,8 @@
 using FabricX.Application.DTOs.Auth;
 using FabricX.Application.Exceptions;
 using FabricX.Application.Services;
+using FabricX.Domain.Entities;
 using FabricX.Domain.Enums;
-using FabricX.Domain.Exceptions;
 using FabricX.Infrastructure.Seguranca;
 using FabricX.Tests.Fakes;
 using Microsoft.Extensions.Options;
@@ -23,40 +23,13 @@ public class AuthServiceTests
         _service = new AuthService(_repositorio, _hasher, new GeradorDeTokenJwt(opcoes));
     }
 
-    private static RegistrarUsuarioDto Registro(string email = "maria@fabricx.com", string senha = "Senha@123") =>
-        new() { Nome = "Maria", Email = email, Senha = senha };
-
-    [Fact]
-    public async Task Registrar_CriaOperadorComSenhaEmHash()
-    {
-        var usuario = await _service.RegistrarAsync(Registro(), Ct);
-
-        Assert.Equal(PerfilUsuario.Operador, usuario.Perfil);
-        Assert.True(usuario.Ativo);
-        var gravado = await _repositorio.ObterPorEmailAsync("maria@fabricx.com", Ct);
-        Assert.NotNull(gravado);
-        Assert.NotEqual("Senha@123", gravado.SenhaHash);
-        Assert.True(_hasher.Verificar("Senha@123", gravado.SenhaHash));
-    }
-
-    [Fact]
-    public async Task Registrar_EmailJaCadastradoEmOutraCaixa_LancaDomainException()
-    {
-        await _service.RegistrarAsync(Registro(), Ct);
-
-        await Assert.ThrowsAsync<DomainException>(() => _service.RegistrarAsync(Registro("MARIA@fabricx.com"), Ct));
-    }
-
-    [Fact]
-    public async Task Registrar_EmailInvalido_LancaDomainException()
-    {
-        await Assert.ThrowsAsync<DomainException>(() => _service.RegistrarAsync(Registro("semarroba"), Ct));
-    }
+    private async Task CadastrarMariaAsync() =>
+        await _repositorio.AdicionarAsync(new Usuario("Maria", "maria@fabricx.com", _hasher.Gerar("Senha@123"), PerfilUsuario.Operador), Ct);
 
     [Fact]
     public async Task Login_CredenciaisCorretas_DevolveTokenComUsuarioEExpiracao()
     {
-        await _service.RegistrarAsync(Registro(), Ct);
+        await CadastrarMariaAsync();
 
         var resultado = await _service.LoginAsync(new LoginDto { Email = " Maria@Fabricx.com ", Senha = "Senha@123" }, Ct);
 
@@ -69,7 +42,7 @@ public class AuthServiceTests
     [Fact]
     public async Task Login_SenhaErrada_LancaNaoAutorizado()
     {
-        await _service.RegistrarAsync(Registro(), Ct);
+        await CadastrarMariaAsync();
 
         await Assert.ThrowsAsync<NaoAutorizadoException>(() =>
             _service.LoginAsync(new LoginDto { Email = "maria@fabricx.com", Senha = "errada" }, Ct));
@@ -78,7 +51,7 @@ public class AuthServiceTests
     [Fact]
     public async Task Login_EmailInexistente_LancaNaoAutorizadoComAMesmaMensagemDaSenhaErrada()
     {
-        await _service.RegistrarAsync(Registro(), Ct);
+        await CadastrarMariaAsync();
 
         var semUsuario = await Assert.ThrowsAsync<NaoAutorizadoException>(() =>
             _service.LoginAsync(new LoginDto { Email = "nao@existe.com", Senha = "Senha@123" }, Ct));
@@ -91,10 +64,35 @@ public class AuthServiceTests
     [Fact]
     public async Task Login_UsuarioInativo_LancaNaoAutorizado()
     {
-        await _service.RegistrarAsync(Registro(), Ct);
+        await CadastrarMariaAsync();
         (await _repositorio.ObterPorEmailAsync("maria@fabricx.com", Ct))!.Inativar();
 
         await Assert.ThrowsAsync<NaoAutorizadoException>(() =>
             _service.LoginAsync(new LoginDto { Email = "maria@fabricx.com", Senha = "Senha@123" }, Ct));
+    }
+
+    [Fact]
+    public async Task Login_EmailInexistente_AindaVerificaASenhaParaNaoRevelarOTempo()
+    {
+        var hasher = new HasherContador(_hasher);
+        var service = new AuthService(_repositorio, hasher, new GeradorDeTokenJwt(Options.Create(new JwtOptions { Chave = ApiFactory.ChaveDeTeste })));
+
+        await Assert.ThrowsAsync<NaoAutorizadoException>(() =>
+            service.LoginAsync(new LoginDto { Email = "nao@existe.com", Senha = "Senha@123" }, Ct));
+
+        Assert.Equal(1, hasher.Verificacoes);
+    }
+
+    private sealed class HasherContador(SenhaHasherPbkdf2 interno) : FabricX.Application.Interfaces.ISenhaHasher
+    {
+        public int Verificacoes { get; private set; }
+
+        public string Gerar(string senha) => interno.Gerar(senha);
+
+        public bool Verificar(string senha, string hash)
+        {
+            Verificacoes++;
+            return interno.Verificar(senha, hash);
+        }
     }
 }

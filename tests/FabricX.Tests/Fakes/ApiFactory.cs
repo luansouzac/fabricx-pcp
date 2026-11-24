@@ -18,6 +18,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("Jwt:Chave", ChaveDeTeste);
+        builder.UseSetting("RateLimit:LoginPorMinuto", "1000");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={_arquivoBanco};Pooling=False");
     }
 
@@ -28,11 +29,31 @@ public class ApiFactory : WebApplicationFactory<Program>
         return cliente;
     }
 
+    public HttpClient CriarClienteAutenticadoComo(Usuario usuario)
+    {
+        using var escopo = Services.CreateScope();
+        var token = escopo.ServiceProvider.GetRequiredService<IGeradorDeToken>().Gerar(usuario).Token;
+        var cliente = CreateClient();
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return cliente;
+    }
+
+    public Usuario CriarUsuario(string email, string senha, PerfilUsuario perfil)
+    {
+        using var escopo = Services.CreateScope();
+        var hasher = escopo.ServiceProvider.GetRequiredService<ISenhaHasher>();
+        var usuario = new Usuario(email, email, hasher.Gerar(senha), perfil);
+        escopo.ServiceProvider.GetRequiredService<IUsuarioRepository>().AdicionarAsync(usuario, CancellationToken.None).GetAwaiter().GetResult();
+        return usuario;
+    }
+
     public string GerarToken(PerfilUsuario perfil)
     {
         using var escopo = Services.CreateScope();
-        var usuario = new Usuario("Teste", $"{perfil}@fabricx.com".ToLowerInvariant(), "hash", perfil);
-        typeof(Usuario).GetProperty(nameof(Usuario.Id))!.SetValue(usuario, 1);
+        var repositorio = escopo.ServiceProvider.GetRequiredService<IUsuarioRepository>();
+        var email = $"{perfil}@fabricx.com".ToLowerInvariant();
+        var usuario = repositorio.ObterPorEmailAsync(email, CancellationToken.None).GetAwaiter().GetResult()
+            ?? CriarUsuario(email, "Senha@123", perfil);
         return escopo.ServiceProvider.GetRequiredService<IGeradorDeToken>().Gerar(usuario).Token;
     }
 

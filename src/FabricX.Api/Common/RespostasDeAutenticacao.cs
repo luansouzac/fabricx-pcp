@@ -1,3 +1,4 @@
+using FabricX.Application.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace FabricX.Api.Common;
@@ -6,6 +7,17 @@ public static class RespostasDeAutenticacao
 {
     public static JwtBearerEvents Eventos() => new()
     {
+        OnTokenValidated = async contexto =>
+        {
+            var repositorio = contexto.HttpContext.RequestServices.GetRequiredService<IUsuarioRepository>();
+            var idDoToken = contexto.Principal?.FindFirst("sub")?.Value;
+            var usuario = int.TryParse(idDoToken, out var id)
+                ? await repositorio.ObterPorIdAsync(id, contexto.HttpContext.RequestAborted)
+                : null;
+
+            if (usuario is not { Ativo: true })
+                contexto.Fail("Usuário inexistente ou inativo.");
+        },
         OnChallenge = contexto =>
         {
             contexto.HandleResponse();

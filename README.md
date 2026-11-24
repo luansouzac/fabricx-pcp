@@ -30,7 +30,16 @@ O FabricX controla produtos e estoque, estrutura de produto, ordens de produçã
 docker compose up --build
 ```
 
-A API sobe em `http://localhost:5168` já com o seed carregado e a chave de desenvolvimento do JWT (veja [Autenticação](#autenticação-jwt)). O banco fica no volume `fabricx-data` e persiste entre execuções.
+Sobem dois serviços:
+
+| Serviço | Endereço |
+|---|---|
+| Front (Vue, servido por nginx) | `http://localhost:5173` |
+| API (com Swagger UI em `/swagger`) | `http://localhost:5168` |
+
+A API já sobe com o seed carregado e a chave de desenvolvimento do JWT (veja [Autenticação](#autenticação-jwt)). O banco fica no volume `fabricx-data` e persiste entre execuções.
+
+O front é compilado com a URL da API definida em `VITE_API_URL` (build arg no `docker-compose.yml`), e a API só aceita requisições vindas das origens listadas em `Cors__Origens__0`. Para publicar em outro endereço, mude os dois valores.
 
 ```bash
 docker compose down        # para o container, mantém os dados
@@ -40,6 +49,10 @@ docker compose down -v     # para e apaga o volume (o próximo up recarrega o se
 Se o build falhar com `unexpected EOF` no `dotnet restore`, é instabilidade de rede ao baixar pacotes NuGet. Rode o comando de novo.
 
 Os testes (`dotnet test`) e o desenvolvimento no dia a dia continuam usando o SDK local.
+
+## CORS
+
+A origem do front vem de `Cors:Origens` (lista no `appsettings` ou variáveis `Cors__Origens__0`, `Cors__Origens__1`...). Em Development, sem nenhuma origem configurada, a API libera qualquer origem. Fora de Development, sem origem configurada, nenhuma origem é liberada.
 
 ## Rodar a API sem Docker
 
@@ -78,11 +91,10 @@ O Swagger UI só existe em Development.
 
 Quase todos os endpoints exigem token. No Swagger UI: chame `POST /api/auth/login` com um dos usuários abaixo, copie o valor de `data.token`, clique em **Authorize** no topo da página, cole o token e confirme. Os cadeados das rotas passam a enviar o cabeçalho `Authorization: Bearer <token>`.
 
-Endpoints atuais. Todos exigem token, exceto `POST /api/auth/registro` e `POST /api/auth/login`:
+Endpoints atuais. Todos exigem token, exceto `POST /api/auth/login`:
 
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/auth/registro` | Cadastra usuário com perfil Operador (público) |
 | POST | `/api/auth/login` | Valida e-mail e senha e devolve o token JWT (público) |
 | GET | `/api/usuarios` | Lista usuários (Administrador) |
 | GET | `/api/usuarios/{id}` | Busca usuário por id (Administrador) |
@@ -160,7 +172,7 @@ Exemplos de erro, no mesmo formato:
 
 ## Autenticação (JWT)
 
-Fluxo: cadastro (`POST /api/auth/registro`) ou usuário do seed, login (`POST /api/auth/login`), token no cabeçalho `Authorization: Bearer <token>` nas demais rotas. O token é assinado com HMAC-SHA256, expira em 60 minutos e carrega `sub`, `email`, `name`, `role` e `jti`. Não há refresh token: ao expirar, faça login de novo. A explicação completa, com as decisões, está em [docs/conceitos/jwt-e-cache.md](docs/conceitos/jwt-e-cache.md).
+Fluxo: usuário do seed ou criado por um administrador (`POST /api/usuarios`), login (`POST /api/auth/login`), token no cabeçalho `Authorization: Bearer <token>` nas demais rotas. O token é assinado com HMAC-SHA256, expira em 60 minutos e carrega `sub`, `email`, `name`, `role` e `jti`. Não há refresh token: ao expirar, faça login de novo. A explicação completa, com as decisões, está em [docs/conceitos/jwt-e-cache.md](docs/conceitos/jwt-e-cache.md).
 
 Usuários criados pelo seed (só em Development, para teste):
 
@@ -169,7 +181,7 @@ Usuários criados pelo seed (só em Development, para teste):
 | `admin@fabricx.com` | `Admin@123` | Administrador |
 | `operador@fabricx.com` | `Operador@123` | Operador |
 
-Perfis: o **Operador** usa todos os endpoints de produção, mas não gerencia usuários nem inativa produto e recurso. O **Administrador** faz tudo. O cadastro público sempre cria Operador.
+Perfis: o **Operador** usa todos os endpoints de produção, mas não gerencia usuários nem inativa produto e recurso. O **Administrador** faz tudo. Não há cadastro público: só o administrador cria usuários, e o sistema não deixa inativar ou rebaixar o último administrador ativo. Inativar um usuário derruba as sessões dele na hora: o token é revalidado contra o banco a cada requisição. O login tem limite de tentativas por IP (`RateLimit__LoginPorMinuto`, padrão 5) e responde 429 acima disso.
 
 Login:
 
@@ -219,7 +231,7 @@ CACHE INVALIDADO: uma escrita bem-sucedida descartou ...      (um POST, PUT ou D
 CACHE MISS indicadores:resumo: buscando na fonte original     (volta a buscar, com dado novo)
 ```
 
-Qualquer escrita bem-sucedida invalida todas as consultas em cache, então o resultado nunca fica velho. Login, cadastro e gestão de usuários não invalidam. Para ver ao vivo com Docker: `docker compose logs -f api`.
+Qualquer escrita bem-sucedida invalida todas as consultas em cache, então o resultado nunca fica velho. Login e gestão de usuários não invalidam. Para ver ao vivo com Docker: `docker compose logs -f api`.
 
 ## Rodar os testes
 

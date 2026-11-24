@@ -3,6 +3,7 @@ using FabricX.Application.DTOs.Auth;
 using FabricX.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FabricX.Api.Controllers;
 
@@ -18,20 +19,12 @@ public class AuthController : ControllerBase
         _service = service;
     }
 
-    [HttpPost("registro")]
-    [ProducesResponseType(typeof(WebResponse<UsuarioDto>), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Registrar([FromBody] RegistrarUsuarioDto dto, CancellationToken cancellationToken)
-    {
-        var usuario = await _service.RegistrarAsync(dto, cancellationToken);
-        var resposta = WebResponse<UsuarioDto>.Success(usuario, StatusCodes.Status201Created, "Usuário cadastrado.");
-        return StatusCode(StatusCodes.Status201Created, resposta);
-    }
-
     [HttpPost("login")]
+    [EnableRateLimiting(Limitador.Login)]
     [ProducesResponseType(typeof(WebResponse<TokenDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
     {
         var token = await _service.LoginAsync(dto, cancellationToken);
