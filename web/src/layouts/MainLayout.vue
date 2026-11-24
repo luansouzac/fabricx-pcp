@@ -7,6 +7,8 @@ import logoEscuro from '../assets/logo/fabricx-horizontal-escuro.svg'
 const itensMenu = [
   { titulo: 'Início', icone: 'mdi-view-dashboard-outline', rota: '/' },
   { titulo: 'Produtos', icone: 'mdi-package-variant-closed', rota: '/produtos' },
+  { titulo: 'Recursos', icone: 'mdi-robot-industrial-outline', rota: '/recursos' },
+  { titulo: 'Ordens de produção', icone: 'mdi-clipboard-text-outline', rota: '/ordens' },
 ]
 
 const theme = useTheme()
