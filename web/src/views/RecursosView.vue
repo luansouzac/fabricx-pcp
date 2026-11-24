@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import ConfirmacaoDialog from '../components/ConfirmacaoDialog.vue'
 import { useRecursosStore } from '../stores/recursos'
 import { nomeDoTipoRecurso, tiposDeRecurso as tipos } from '../utils/recurso'
@@ -20,10 +20,14 @@ const colunas = [
   { title: 'Ações', key: 'acoes', sortable: false },
 ].map((coluna) => ({ ...coluna, align: 'center' }))
 
-const filtrar = (valor, consulta, item) => {
-  if (tipoSelecionado.value && item.raw.tipo !== tipoSelecionado.value) return false
-  return !consulta || item.raw.nome.toLowerCase().includes(consulta.toLowerCase())
-}
+const recursosFiltrados = computed(() => {
+  const consulta = (busca.value ?? '').trim().toLowerCase()
+  return recursos.itens.filter(
+    (recurso) =>
+      (!tipoSelecionado.value || recurso.tipo === tipoSelecionado.value) &&
+      (!consulta || recurso.nome.toLowerCase().includes(consulta)),
+  )
+})
 
 function pedirInativacao(recurso) {
   recursoParaInativar.value = recurso
@@ -64,10 +68,8 @@ onMounted(() => recursos.carregar())
 
   <v-data-table
     :headers="colunas"
-    :items="recursos.itens"
+    :items="recursosFiltrados"
     :loading="recursos.carregando"
-    :search="`${busca ?? ''}|${tipoSelecionado ?? ''}`"
-    :custom-filter="filtrar"
     items-per-page-text="Itens por página"
     no-data-text="Nenhum recurso encontrado. Crie um recurso ou mude o filtro."
     loading-text="Carregando recursos..."

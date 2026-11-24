@@ -6,7 +6,7 @@ const CHAVE = 'fx-auth'
 
 function lerSessao() {
   try {
-    const sessao = JSON.parse(localStorage.getItem(CHAVE))
+    const sessao = JSON.parse(sessionStorage.getItem(CHAVE))
     return sessao?.token && new Date(sessao.expiraEmUtc) > new Date() ? sessao : null
   } catch {
     return null
@@ -24,12 +24,12 @@ export const useAuthStore = defineStore('auth', () => {
   async function entrar(email, senha) {
     const dados = await api.post('/api/auth/login', { email, senha }, { publica: true })
     sessao.value = { token: dados.token, expiraEmUtc: dados.expiraEmUtc, usuario: dados.usuario }
-    localStorage.setItem(CHAVE, JSON.stringify(sessao.value))
+    sessionStorage.setItem(CHAVE, JSON.stringify(sessao.value))
   }
 
   function sair() {
     sessao.value = null
-    localStorage.removeItem(CHAVE)
+    sessionStorage.removeItem(CHAVE)
   }
 
   return { token, usuario, logado, ehAdministrador, entrar, sair }
