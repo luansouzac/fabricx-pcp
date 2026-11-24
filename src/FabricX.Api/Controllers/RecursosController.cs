@@ -1,6 +1,7 @@
 using FabricX.Api.Common;
 using FabricX.Application.DTOs.Recursos;
 using FabricX.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FabricX.Api.Controllers;
@@ -54,6 +55,7 @@ public class RecursosController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = Perfis.Administrador)]
     [ProducesResponseType(typeof(WebResponse<RecursoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(WebResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Inativar(int id, CancellationToken cancellationToken)

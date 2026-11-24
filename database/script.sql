@@ -99,6 +99,16 @@ CREATE TABLE demanda_prevista (
     UNIQUE (produto_id, periodo)
 );
 
+CREATE TABLE usuario (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome       TEXT    NOT NULL,
+    email      TEXT    NOT NULL UNIQUE,
+    senha_hash TEXT    NOT NULL,
+    perfil     TEXT    NOT NULL
+               CHECK (perfil IN ('ADMINISTRADOR', 'OPERADOR')),
+    ativo      INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1))
+);
+
 CREATE INDEX ix_ordem_status_prazo   ON ordem_producao (status, prazo_entrega);
 CREATE INDEX ix_programacao_recurso  ON programacao (recurso_id, inicio_previsto);
 CREATE INDEX ix_apontamento_prog     ON apontamento (programacao_id);

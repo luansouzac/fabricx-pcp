@@ -1,7 +1,9 @@
 using FabricX.Application.Interfaces;
+using FabricX.Infrastructure.Cache;
 using FabricX.Infrastructure.Integracoes;
 using FabricX.Infrastructure.Persistence;
 using FabricX.Infrastructure.Repositories;
+using FabricX.Infrastructure.Seguranca;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +25,11 @@ public static class DependencyInjection
         services.AddScoped<IApontamentoRepository, ApontamentoRepository>();
         services.AddScoped<IDemandaPrevistaRepository, DemandaPrevistaRepository>();
         services.AddScoped<IRoteiroEtapaRepository, RoteiroEtapaRepository>();
+        services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddSingleton<ISenhaHasher, SenhaHasherPbkdf2>();
+        services.AddSingleton<IGeradorDeToken, GeradorDeTokenJwt>();
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheDeConsultas, CacheDeConsultasMemoria>();
         return services;
     }
 }

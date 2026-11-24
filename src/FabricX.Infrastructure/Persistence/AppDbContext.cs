@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Apontamento> Apontamentos => Set<Apontamento>();
     public DbSet<DemandaPrevista> DemandasPrevistas => Set<DemandaPrevista>();
     public DbSet<RoteiroEtapa> EtapasRoteiro => Set<RoteiroEtapa>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

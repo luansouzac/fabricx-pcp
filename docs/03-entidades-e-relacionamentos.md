@@ -15,6 +15,7 @@ Mapa dos requisitos do enunciado para as tabelas. O DER está em [der/der.mmd](d
 | `APONTAMENTO` | Produção real: quantidade boa, defeituosa e tempo gasto. | Desempenho |
 | `MOVIMENTACAO_ESTOQUE` | Entradas e saídas de estoque, opcionalmente ligadas a uma ordem. | Estoque |
 | `DEMANDA_PREVISTA` | Quantidade esperada por produto e mês. | Planejamento de capacidade |
+| `USUARIO` | Quem acessa a API: e-mail único, senha em hash PBKDF2 e perfil (`ADMINISTRADOR` ou `OPERADOR`). Não se liga às outras tabelas. | Autenticação JWT (enunciado do trabalho prático) |
 
 ## Relacionamentos
 
@@ -41,6 +42,7 @@ Mapa dos requisitos do enunciado para as tabelas. O DER está em [der/der.mmd](d
 - Um só cadastro de `PRODUTO` com `tipo`, em vez de três tabelas: a estrutura (BOM) liga qualquer produto a qualquer componente.
 - `estoque_atual` é guardado no produto e atualizado a cada `MOVIMENTACAO_ESTOQUE` (o histórico fica na movimentação).
 - Datas em `TEXT` ISO-8601 e booleanos em `INTEGER`, por serem os tipos nativos do SQLite.
+- `USUARIO` guarda só o hash da senha (PBKDF2, SHA-256, salt aleatório, 210 mil iterações). A senha em texto nunca é gravada nem devolvida.
 - Integração com ERP/SGQ (desejável) não tem tabela: será uma interface na Application com implementação simulada.
 
 ## DER
@@ -138,4 +140,13 @@ erDiagram
         TEXT periodo "AAAA-MM"
         REAL quantidade
     }
+    USUARIO {
+        INTEGER id PK
+        TEXT nome
+        TEXT email UK
+        TEXT senha_hash "PBKDF2, nunca texto puro"
+        TEXT perfil "ADMINISTRADOR | OPERADOR"
+        INTEGER ativo
+    }
 ```
+

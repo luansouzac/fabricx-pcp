@@ -41,6 +41,26 @@ public class SeedTests : IDisposable
     }
 
     [Fact]
+    public async Task Seed_CriaAdministradorEOperadorComSenhaEmHashQueVerifica()
+    {
+        await using var contexto = _banco.CriarContexto();
+        await contexto.Database.ExecuteSqlRawAsync(LerSeed(), Ct);
+        var hasher = new FabricX.Infrastructure.Seguranca.SenhaHasherPbkdf2();
+        var repositorio = new FabricX.Infrastructure.Repositories.UsuarioRepository(contexto);
+
+        var admin = await repositorio.ObterPorEmailAsync("admin@fabricx.com", Ct);
+        var operador = await repositorio.ObterPorEmailAsync("operador@fabricx.com", Ct);
+
+        Assert.NotNull(admin);
+        Assert.NotNull(operador);
+        Assert.Equal(FabricX.Domain.Enums.PerfilUsuario.Administrador, admin.Perfil);
+        Assert.Equal(FabricX.Domain.Enums.PerfilUsuario.Operador, operador.Perfil);
+        Assert.True(hasher.Verificar("Admin@123", admin.SenhaHash));
+        Assert.True(hasher.Verificar("Operador@123", operador.SenhaHash));
+        Assert.DoesNotContain("Admin@123", admin.SenhaHash);
+    }
+
+    [Fact]
     public async Task Seed_Ordem60GarrafasDaguaTemSaldoEOrdem10KitsNao()
     {
         await using var contexto = _banco.CriarContexto();
@@ -64,7 +84,8 @@ public class SeedTests : IDisposable
             new FabricX.Infrastructure.Repositories.RecursoRepository(contexto),
             new FabricX.Infrastructure.Repositories.ProgramacaoRepository(contexto),
             new FabricX.Infrastructure.Repositories.DemandaPrevistaRepository(contexto),
-            new FabricX.Infrastructure.Repositories.RoteiroEtapaRepository(contexto));
+            new FabricX.Infrastructure.Repositories.RoteiroEtapaRepository(contexto),
+            new SemCacheFake());
 
         var capacidade = await servico.CalcularAsync("2026-12", Ct);
 

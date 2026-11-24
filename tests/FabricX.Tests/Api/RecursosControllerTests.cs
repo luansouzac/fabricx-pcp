@@ -11,7 +11,7 @@ public class RecursosControllerTests : IClassFixture<ApiFactory>
 
     public RecursosControllerTests(ApiFactory fabrica)
     {
-        _cliente = fabrica.CreateClient();
+        _cliente = fabrica.CriarClienteAutenticado();
     }
 
     private static string NomeUnico() => $"Recurso-{Guid.NewGuid():N}"[..16];

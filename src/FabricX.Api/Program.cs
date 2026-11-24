@@ -1,16 +1,24 @@
+using System.Text;
 using System.Text.Json.Serialization;
 using FabricX.Api.Common;
+using FabricX.Api.Filters;
 using FabricX.Api.Middleware;
 using FabricX.Application.Interfaces;
 using FabricX.Application.Services;
 using FabricX.Infrastructure;
+using FabricX.Infrastructure.Cache;
 using FabricX.Infrastructure.Persistence;
+using FabricX.Infrastructure.Seguranca;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddControllers()
+    .AddControllers(opcoes => opcoes.Filters.Add<InvalidarCacheAposEscritaFilter>())
     .AddJsonOptions(opcoes => opcoes.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .ConfigureApiBehaviorOptions(opcoes =>
     {
@@ -25,7 +33,45 @@ builder.Services
         };
     });
 
-builder.Services.AddOpenApi();
+builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.Secao));
+
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.Secao))
+    .Validate(o => o.Chave.Length >= JwtOptions.TamanhoMinimoDaChave, $"Jwt:Chave deve ter ao menos {JwtOptions.TamanhoMinimoDaChave} caracteres e vir de configuração (variável Jwt__Chave).")
+    .Validate(o => o.Emissor.Length > 0 && o.Audiencia.Length > 0, "Jwt:Emissor e Jwt:Audiencia são obrigatórios.")
+    .Validate(o => o.ExpiraEmMinutos > 0, "Jwt:ExpiraEmMinutos deve ser maior que zero.")
+    .ValidateOnStart();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((opcoes, jwt) =>
+    {
+        opcoes.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Value.Emissor,
+            ValidateAudience = true,
+            ValidAudience = jwt.Value.Audiencia,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.Chave)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "sub",
+            RoleClaimType = GeradorDeTokenJwt.ClaimPerfil
+        };
+        opcoes.MapInboundClaims = false;
+        opcoes.Events = RespostasDeAutenticacao.Eventos();
+    });
+
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
+builder.Services.AddRateLimiter(opcoes => Limitador.Configurar(opcoes, builder.Configuration.GetValue("RateLimit:LoginPorMinuto", 5)));
+
+builder.Services.AddOpenApi(opcoes => opcoes.AddDocumentTransformer<BearerOpenApiTransformer>());
 
 var origensPermitidas = builder.Configuration.GetSection("Cors:Origens").Get<string[]>() ?? [];
 
@@ -41,6 +87,8 @@ builder.Services.AddCors(opcoes => opcoes.AddPolicy("Front", politica =>
 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default não configurada."));
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<IItemEstruturaService, ItemEstruturaService>();
 builder.Services.AddScoped<IOrdemProducaoService, OrdemProducaoService>();
@@ -66,14 +114,16 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
     app.UseSwaggerUI(opcoes => opcoes.SwaggerEndpoint("/openapi/v1.json", "FabricX API v1"));
 }
 
 app.UseCors("Front");
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();

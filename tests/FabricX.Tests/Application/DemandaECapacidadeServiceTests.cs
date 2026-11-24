@@ -26,7 +26,7 @@ public class DemandaECapacidadeServiceTests
     public DemandaECapacidadeServiceTests()
     {
         _service = new DemandaPrevistaService(_demandas, _produtos);
-        _capacidade = new CapacidadeService(_recursos, _programacoes, _demandas, _etapas);
+        _capacidade = new CapacidadeService(_recursos, _programacoes, _demandas, _etapas, new SemCacheFake());
     }
 
     private async Task PrepararAsync()

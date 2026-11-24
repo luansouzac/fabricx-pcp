@@ -11,7 +11,7 @@ public class ProdutosControllerTests : IClassFixture<ApiFactory>
 
     public ProdutosControllerTests(ApiFactory fabrica)
     {
-        _cliente = fabrica.CreateClient();
+        _cliente = fabrica.CriarClienteAutenticado();
     }
 
     private static object NovoProduto(string codigo, double estoque = 10, double minimo = 5) => new

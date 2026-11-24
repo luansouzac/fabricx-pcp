@@ -12,23 +12,30 @@ public class CapacidadeService : ICapacidadeService
     private readonly IProgramacaoRepository _programacoes;
     private readonly IDemandaPrevistaRepository _demandas;
     private readonly IRoteiroEtapaRepository _etapas;
+    private readonly ICacheDeConsultas _cache;
 
     public CapacidadeService(
         IRecursoRepository recursos,
         IProgramacaoRepository programacoes,
         IDemandaPrevistaRepository demandas,
-        IRoteiroEtapaRepository etapas)
+        IRoteiroEtapaRepository etapas,
+        ICacheDeConsultas cache)
     {
         _recursos = recursos;
         _programacoes = programacoes;
         _demandas = demandas;
         _etapas = etapas;
+        _cache = cache;
     }
 
-    public async Task<CapacidadeDto> CalcularAsync(string? periodoTexto, CancellationToken cancellationToken)
+    public Task<CapacidadeDto> CalcularAsync(string? periodoTexto, CancellationToken cancellationToken)
     {
         var periodo = periodoTexto is null ? PeriodoMensal.Atual() : PeriodoMensal.Parse(periodoTexto);
+        return _cache.ObterOuBuscarAsync($"capacidade:{periodo}", () => CalcularNaFonteAsync(periodo, cancellationToken));
+    }
 
+    private async Task<CapacidadeDto> CalcularNaFonteAsync(PeriodoMensal periodo, CancellationToken cancellationToken)
+    {
         var recursos = (await _recursos.ListarAsync(cancellationToken)).Where(r => r.Ativo).ToList();
         var programacoes = await _programacoes.ListarAsync(null, periodo.Inicio, periodo.Fim, cancellationToken);
 

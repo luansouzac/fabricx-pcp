@@ -13,6 +13,7 @@ Destilado dos PDFs e do diagrama da disciplina. Cada arquivo traz a fonte no cab
 | [aspnet-core-ef.md](aspnet-core-ef.md) | Configurar EF Core, solução, projetos, migrations | ASP.NET Core |
 | [aspnet-core-web-api.md](aspnet-core-web-api.md) | Criar controller, tratar erro HTTP, documentar OpenAPI | Documentação oficial Microsoft (Web API, Swagger, hub ASP.NET Core) |
 | [async-await.md](async-await.md) | Escrever método assíncrono, revisar `.Result` e `async void` | Code Maze |
+| [jwt-e-cache.md](jwt-e-cache.md) | Explicar ou alterar a autenticação JWT e o cache das consultas | Enunciado do trabalho prático (seções 4.4, 4.5 e 8), documentação oficial |
 | [engenharia-de-software.md](engenharia-de-software.md) | Documentar o projeto, escrever requisitos e regras de negócio | Apostila, exercícios |
 | [mapa-conceito-codigo.md](mapa-conceito-codigo.md) | Saber onde cada conceito vive no FabricX e onde o projeto diverge do material | todos |
 

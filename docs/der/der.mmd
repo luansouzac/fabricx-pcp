@@ -90,3 +90,11 @@ erDiagram
         TEXT periodo "AAAA-MM"
         REAL quantidade
     }
+    USUARIO {
+        INTEGER id PK
+        TEXT nome
+        TEXT email UK
+        TEXT senha_hash "PBKDF2, nunca texto puro"
+        TEXT perfil "ADMINISTRADOR | OPERADOR"
+        INTEGER ativo
+    }
