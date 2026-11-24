@@ -35,5 +35,44 @@ export const useProdutosStore = defineStore('produtos', () => {
 
   const inativar = (id) => api.delete(`/api/produtos/${id}`, { mensagemSucesso: 'Produto inativado com sucesso.' })
 
-  return { itens, carregando, carregar, obter, criar, atualizar, movimentar, listarMovimentacoes, inativar }
+  const listarEstrutura = (id) => api.get(`/api/produtos/${id}/estrutura`)
+
+  const adicionarComponente = (id, dados) =>
+    api.post(`/api/produtos/${id}/estrutura`, dados, { mensagemSucesso: 'Componente adicionado com sucesso.' })
+
+  const alterarQuantidadeDoComponente = (id, componenteId, quantidade) =>
+    api.put(`/api/produtos/${id}/estrutura/${componenteId}`, { quantidade }, { mensagemSucesso: 'Quantidade atualizada com sucesso.' })
+
+  const removerComponente = (id, componenteId) =>
+    api.delete(`/api/produtos/${id}/estrutura/${componenteId}`, { mensagemSucesso: 'Componente removido com sucesso.' })
+
+  const listarRoteiro = (id) => api.get(`/api/produtos/${id}/roteiro`)
+
+  const adicionarEtapa = (id, dados) =>
+    api.post(`/api/produtos/${id}/roteiro`, dados, { mensagemSucesso: 'Etapa adicionada com sucesso.' })
+
+  const atualizarEtapa = (id, etapaId, dados) =>
+    api.put(`/api/produtos/${id}/roteiro/${etapaId}`, dados, { mensagemSucesso: 'Etapa atualizada com sucesso.' })
+
+  const removerEtapa = (id, etapaId) =>
+    api.delete(`/api/produtos/${id}/roteiro/${etapaId}`, { mensagemSucesso: 'Etapa removida com sucesso.' })
+
+  return {
+    itens, carregando,
+    carregar,
+    obter,
+    criar,
+    atualizar,
+    movimentar,
+    listarMovimentacoes,
+    inativar,
+    listarEstrutura,
+    adicionarComponente,
+    alterarQuantidadeDoComponente,
+    removerComponente,
+    listarRoteiro,
+    adicionarEtapa,
+    atualizarEtapa,
+    removerEtapa,
+  }
 })

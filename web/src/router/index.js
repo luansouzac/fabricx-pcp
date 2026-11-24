@@ -21,6 +21,20 @@ const routes = [
     meta: { titulo: 'Detalhe do produto' },
   },
   {
+    path: '/produtos/:id(\\d+)/estrutura',
+    name: 'produto-estrutura',
+    component: ProdutoDetalheView,
+    props: (rota) => ({ id: rota.params.id, aba: 'estrutura' }),
+    meta: { titulo: 'Estrutura do produto' },
+  },
+  {
+    path: '/produtos/:id(\\d+)/roteiro',
+    name: 'produto-roteiro',
+    component: ProdutoDetalheView,
+    props: (rota) => ({ id: rota.params.id, aba: 'roteiro' }),
+    meta: { titulo: 'Roteiro do produto' },
+  },
+  {
     path: '/produtos/:id(\\d+)/editar',
     name: 'produto-editar',
     component: ProdutoFormView,
