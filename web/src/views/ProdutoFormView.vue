@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProdutosStore } from '../stores/produtos'
-import { tiposDeProduto as tipos } from '../utils/produto'
+import { tiposDeProduto as tipos, unidadesDeMedida } from '../utils/produto'
 
 const props = defineProps({ id: { type: String, default: null } })
 
@@ -10,6 +10,12 @@ const router = useRouter()
 const produtos = useProdutosStore()
 
 const editando = computed(() => props.id !== null)
+
+const unidades = computed(() =>
+  unidadesDeMedida.some((u) => u.value === formulario.unidadeMedida)
+    ? unidadesDeMedida
+    : [...unidadesDeMedida, { title: formulario.unidadeMedida, value: formulario.unidadeMedida }],
+)
 
 const formulario = reactive({
   codigo: '',
@@ -34,7 +40,7 @@ const regras = {
   codigo: [obrigatorio('O código'), limite(50)],
   nome: [obrigatorio('O nome'), limite(150)],
   tipo: [(valor) => !!valor || 'Selecione o tipo.'],
-  unidadeMedida: [obrigatorio('A unidade'), limite(10)],
+  unidadeMedida: [(valor) => !!valor || 'Selecione a unidade de medida.'],
   descricao: [limite(500)],
   numero: [naoNegativo],
 }
@@ -85,23 +91,34 @@ async function salvar() {
 </script>
 
 <template>
-  <h1 class="fx-titulo-pagina mb-4">{{ editando ? 'Editar produto' : 'Novo produto' }}</h1>
+  <h1 class="fx-titulo-pagina mb-1">{{ editando ? 'Editar produto' : 'Novo produto' }}</h1>
+  <p class="fx-legenda mb-4">
+    {{ editando ? 'Altere os dados cadastrais. O estoque muda por movimentação.' : 'Informe os dados do produto. Código e tipo não podem ser alterados depois.' }}
+  </p>
 
   <v-card max-width="800" :loading="carregando">
     <v-form ref="referenciaFormulario" @submit.prevent="salvar">
       <v-card-text>
+        <div class="fx-titulo-secao mb-3">Identificação</div>
         <v-row>
           <v-col cols="12" md="4">
             <v-text-field
               v-model="formulario.codigo"
               label="Código"
+              placeholder="Ex.: MP-0001"
               :rules="regras.codigo"
               :disabled="editando"
               autofocus
             />
           </v-col>
           <v-col cols="12" md="8">
-            <v-text-field v-model="formulario.nome" label="Nome" :rules="regras.nome" :autofocus="editando" />
+            <v-text-field
+              v-model="formulario.nome"
+              label="Nome"
+              placeholder="Ex.: Chapa de aço 2mm"
+              :rules="regras.nome"
+              :autofocus="editando"
+            />
           </v-col>
           <v-col cols="12" md="6">
             <v-select
@@ -113,18 +130,26 @@ async function salvar() {
             />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="formulario.unidadeMedida" label="Unidade de medida" :rules="regras.unidadeMedida" />
+            <v-select
+              v-model="formulario.unidadeMedida"
+              :items="unidades"
+              label="Unidade de medida"
+              :rules="regras.unidadeMedida"
+            />
           </v-col>
+        </v-row>
+
+        <div class="fx-titulo-secao mt-4 mb-3">Estoque e custo</div>
+        <v-row>
           <v-col cols="12" md="4">
             <v-text-field
               v-model.number="formulario.estoqueAtual"
               label="Estoque atual"
               type="number"
               min="0"
+              :suffix="formulario.unidadeMedida"
               :rules="regras.numero"
               :disabled="editando"
-              :hint="editando ? 'O estoque muda por movimentação.' : ''"
-              persistent-hint
             />
           </v-col>
           <v-col cols="12" md="4">
@@ -133,30 +158,32 @@ async function salvar() {
               label="Estoque mínimo"
               type="number"
               min="0"
+              :suffix="formulario.unidadeMedida"
               :rules="regras.numero"
             />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field
               v-model.number="formulario.custoUnitario"
-              label="Custo unitário (R$)"
+              label="Custo unitário"
               type="number"
               min="0"
               step="0.01"
+              prefix="R$"
               :rules="regras.numero"
             />
           </v-col>
-          <v-col cols="12">
-            <v-textarea
-              v-model="formulario.descricao"
-              label="Descrição"
-              variant="outlined"
-              rows="2"
-              counter="500"
-              :rules="regras.descricao"
-            />
-          </v-col>
         </v-row>
+
+        <div class="fx-titulo-secao mt-4 mb-3">Detalhes</div>
+        <v-textarea
+          v-model="formulario.descricao"
+          label="Descrição"
+          rows="3"
+          counter="500"
+          auto-grow
+          :rules="regras.descricao"
+        />
       </v-card-text>
       <v-card-actions class="px-4 pb-4">
         <v-btn variant="text" color="secondary" :to="editando ? `/produtos/${id}` : '/produtos'">Cancelar</v-btn>
