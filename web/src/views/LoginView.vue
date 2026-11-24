@@ -71,7 +71,7 @@ async function entrar(evento) {
           :rules="regras.senha"
           @click:append-inner="mostrarSenha = !mostrarSenha"
         />
-        <v-alert v-if="erro" type="error" variant="tonal" density="compact" class="mb-4">{{ erro }}</v-alert>
+        <v-alert v-if="erro" type="error" variant="flat" density="compact" class="mb-4">{{ erro }}</v-alert>
         <v-btn type="submit" color="primary" block :loading="enviando" class="text-none">Entrar</v-btn>
       </v-form>
     </v-card>
