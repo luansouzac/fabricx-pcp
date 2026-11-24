@@ -2,12 +2,17 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmacaoDialog from '../components/ConfirmacaoDialog.vue'
+import EstruturaProduto from '../components/EstruturaProduto.vue'
 import HistoricoMovimentacoes from '../components/HistoricoMovimentacoes.vue'
 import MovimentacaoDialog from '../components/MovimentacaoDialog.vue'
+import RoteiroProduto from '../components/RoteiroProduto.vue'
 import { useProdutosStore } from '../stores/produtos'
 import { moeda, nomeDoTipo } from '../utils/produto'
 
-const props = defineProps({ id: { type: String, required: true } })
+const props = defineProps({
+  id: { type: String, required: true },
+  aba: { type: String, default: 'movimentacoes' },
+})
 
 const router = useRouter()
 const produtos = useProdutosStore()
@@ -109,7 +114,17 @@ async function inativar() {
     </template>
   </v-card>
 
-  <HistoricoMovimentacoes v-if="produto" :produto-id="id" :versao="versaoHistorico" />
+  <template v-if="produto">
+    <v-tabs class="mt-6" color="primary" density="comfortable">
+      <v-tab :to="`/produtos/${id}`" exact :value="'movimentacoes'" class="text-none">Movimentações</v-tab>
+      <v-tab :to="`/produtos/${id}/estrutura`" :value="'estrutura'" class="text-none">Estrutura</v-tab>
+      <v-tab :to="`/produtos/${id}/roteiro`" :value="'roteiro'" class="text-none">Roteiro</v-tab>
+    </v-tabs>
+
+    <HistoricoMovimentacoes v-if="aba === 'movimentacoes'" :produto-id="id" :versao="versaoHistorico" class="mt-4" />
+    <EstruturaProduto v-else-if="aba === 'estrutura'" :produto-id="id" />
+    <RoteiroProduto v-else :produto-id="id" />
+  </template>
 
   <MovimentacaoDialog v-if="produto" v-model="movimentando" :produto="produto" @movimentado="aoMovimentar" />
   <ConfirmacaoDialog
