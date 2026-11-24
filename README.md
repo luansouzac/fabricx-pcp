@@ -13,7 +13,16 @@ API de PCP (Planejamento e Controle da Produção) em C# / .NET 10, com Arquitet
 docker compose up --build
 ```
 
-A API sobe em `http://localhost:5168` já com o seed carregado. O banco fica no volume `fabricx-data` e persiste entre execuções.
+Sobem dois serviços:
+
+| Serviço | Endereço |
+|---|---|
+| Front (Vue, servido por nginx) | `http://localhost:5173` |
+| API (com Swagger UI em `/swagger`) | `http://localhost:5168` |
+
+A API já sobe com o seed carregado. O banco fica no volume `fabricx-data` e persiste entre execuções.
+
+O front é compilado com a URL da API definida em `VITE_API_URL` (build arg no `docker-compose.yml`), e a API só aceita requisições vindas das origens listadas em `Cors__Origens__0`. Para publicar em outro endereço, mude os dois valores.
 
 ```bash
 docker compose down        # para o container, mantém os dados
@@ -23,6 +32,10 @@ docker compose down -v     # para e apaga o volume (o próximo up recarrega o se
 Se o build falhar com `unexpected EOF` no `dotnet restore`, é instabilidade de rede ao baixar pacotes NuGet. Rode o comando de novo.
 
 Os testes (`dotnet test`) e o desenvolvimento no dia a dia continuam usando o SDK local.
+
+## CORS
+
+A origem do front vem de `Cors:Origens` (lista no `appsettings` ou variáveis `Cors__Origens__0`, `Cors__Origens__1`...). Em Development, sem nenhuma origem configurada, a API libera qualquer origem. Fora de Development, sem origem configurada, nenhuma origem é liberada.
 
 ## Rodar a API sem Docker
 
