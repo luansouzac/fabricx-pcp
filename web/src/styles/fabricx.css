@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+.v-application {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  color: rgb(var(--v-theme-on-background));
+}
+
+.fx-titulo-pagina { font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 24px; line-height: 32px; letter-spacing: -0.01em; }
+.fx-titulo-secao  { font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 18px; line-height: 26px; }
+.fx-legenda       { font-size: 12px; line-height: 16px; color: rgb(var(--v-theme-text-muted)); }
+
+.v-data-table { font-size: 13px; }
+.v-data-table th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: rgb(var(--v-theme-on-surface-variant)) !important;
+  background: rgb(var(--v-theme-surface-variant)) !important;
+}
+.v-data-table td { font-variant-numeric: tabular-nums; }
+
+a { color: rgb(var(--v-theme-primary-darken-1)); }
+
+.v-navigation-drawer .v-list-item--active {
+  background: rgb(var(--v-theme-primary-lighten-4));
+  color: rgb(var(--v-theme-primary-darken-2));
+  font-weight: 600;
+}
+.v-navigation-drawer .v-list-item--active .v-list-item__overlay { opacity: 0; }
