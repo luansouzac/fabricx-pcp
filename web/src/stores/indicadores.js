@@ -7,7 +7,18 @@ export const useIndicadoresStore = defineStore('indicadores', () => {
   const carregando = ref(false)
   const falhou = ref(false)
 
+  const ordensPorStatus = ref([])
+
   let ultimaRequisicao = 0
+
+  async function carregarOrdensPorStatus() {
+    try {
+      const resumo = await api.get('/api/indicadores/resumo')
+      ordensPorStatus.value = resumo.ordensPorStatus
+    } catch {
+      ordensPorStatus.value = []
+    }
+  }
 
   async function carregar(filtros = {}) {
     const requisicao = ++ultimaRequisicao
@@ -31,5 +42,5 @@ export const useIndicadoresStore = defineStore('indicadores', () => {
     }
   }
 
-  return { dados, carregando, falhou, carregar }
+  return { dados, ordensPorStatus, carregando, falhou, carregar, carregarOrdensPorStatus }
 })

@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useIndicadoresStore } from '../stores/indicadores'
 import { useProdutosStore } from '../stores/produtos'
 import { useRecursosStore } from '../stores/recursos'
+import { statusDaOrdem } from '../utils/ordem'
 
 const indicadores = useIndicadoresStore()
 const produtos = useProdutosStore()
@@ -69,6 +70,38 @@ const totais = computed(() => {
   ]
 })
 
+const producao = computed(() => {
+  const dados = indicadores.dados
+  if (!dados || dados.totalProduzido + dados.totalDefeituoso === 0) return null
+  const total = dados.totalProduzido + dados.totalDefeituoso
+  return {
+    total,
+    boas: dados.totalProduzido,
+    defeituosas: dados.totalDefeituoso,
+    percentualBoas: (dados.totalProduzido / total) * 100,
+    percentualDefeituosas: (dados.totalDefeituoso / total) * 100,
+  }
+})
+
+const barrasDePercentual = computed(() => {
+  const dados = indicadores.dados
+  return [
+    { titulo: 'Eficiência', valor: dados?.eficiencia },
+    { titulo: 'Cumprimento de prazo', valor: dados?.cumprimentoDePrazo },
+    { titulo: 'Taxa de defeitos', valor: dados?.qualidade },
+  ]
+    .filter((barra) => barra.valor != null)
+    .map((barra) => ({ ...barra, largura: Math.min(barra.valor * 100, 100) }))
+})
+
+const barrasDeStatus = computed(() => {
+  const maior = Math.max(1, ...indicadores.ordensPorStatus.map((item) => item.quantidade))
+  return statusDaOrdem.map((status) => {
+    const quantidade = indicadores.ordensPorStatus.find((item) => item.status === status.value)?.quantidade ?? 0
+    return { ...status, quantidade, largura: (quantidade / maior) * 100 }
+  })
+})
+
 function recarregar() {
   if (periodoInvalido.value) return
   indicadores.carregar(filtros)
@@ -83,6 +116,7 @@ watch(filtros, recarregar)
 onMounted(() => {
   produtos.carregar()
   recursos.carregar()
+  indicadores.carregarOrdensPorStatus()
   recarregar()
 })
 </script>
@@ -164,6 +198,84 @@ onMounted(() => {
     </v-col>
   </v-row>
 
+  <div class="fx-titulo-secao mt-6 mb-3">Gráficos</div>
+  <v-row>
+    <v-col cols="12" md="4">
+      <v-card :loading="indicadores.carregando" class="h-100">
+        <v-card-text>
+          <div class="fx-titulo-secao">Unidades boas e defeituosas</div>
+          <template v-if="producao">
+            <div class="grafico-pilha mt-4" role="img" :aria-label="`${inteiro.format(producao.boas)} unidades boas e ${inteiro.format(producao.defeituosas)} defeituosas`">
+              <v-tooltip :text="`Boas: ${inteiro.format(producao.boas)} un`" location="top">
+                <template #activator="{ props }">
+                  <div v-bind="props" class="grafico-segmento bg-success" :style="{ width: `${producao.percentualBoas}%` }" />
+                </template>
+              </v-tooltip>
+              <v-tooltip v-if="producao.defeituosas > 0" :text="`Defeituosas: ${inteiro.format(producao.defeituosas)} un`" location="top">
+                <template #activator="{ props }">
+                  <div v-bind="props" class="grafico-segmento bg-error" :style="{ width: `${producao.percentualDefeituosas}%` }" />
+                </template>
+              </v-tooltip>
+            </div>
+            <div class="d-flex flex-column ga-2 mt-4">
+              <div class="d-flex align-center ga-2">
+                <span class="grafico-marcador bg-success" />
+                <span>Boas</span>
+                <v-spacer />
+                <span class="font-weight-bold">{{ inteiro.format(producao.boas) }} un · {{ decimal.format(producao.percentualBoas) }}%</span>
+              </div>
+              <div class="d-flex align-center ga-2">
+                <span class="grafico-marcador bg-error" />
+                <span>Defeituosas</span>
+                <v-spacer />
+                <span class="font-weight-bold">{{ inteiro.format(producao.defeituosas) }} un · {{ decimal.format(producao.percentualDefeituosas) }}%</span>
+              </div>
+            </div>
+          </template>
+          <div v-else class="text-medium-emphasis py-4">Sem unidades apontadas para os filtros escolhidos.</div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-card :loading="indicadores.carregando" class="h-100">
+        <v-card-text>
+          <div class="fx-titulo-secao">Indicadores em percentual</div>
+          <div v-if="barrasDePercentual.length" class="d-flex flex-column ga-4 mt-4">
+            <div v-for="barra in barrasDePercentual" :key="barra.titulo">
+              <div class="d-flex align-center mb-1">
+                <span>{{ barra.titulo }}</span>
+                <v-spacer />
+                <span class="font-weight-bold">{{ formatar(barra.valor, percentual) }}</span>
+              </div>
+              <v-progress-linear :model-value="barra.largura" color="primary" bg-color="surface-variant" bg-opacity="1" height="8" rounded :aria-label="barra.titulo" />
+            </div>
+          </div>
+          <div v-else class="text-medium-emphasis py-4">Sem dados para os filtros escolhidos.</div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-card :loading="indicadores.carregando" class="h-100">
+        <v-card-text>
+          <div class="fx-titulo-secao">Ordens por status</div>
+          <div class="fx-legenda">Todas as ordens, sem os filtros acima.</div>
+          <div class="d-flex flex-column ga-3 mt-4">
+            <div v-for="status in barrasDeStatus" :key="status.value">
+              <div class="d-flex align-center mb-1">
+                <span>{{ status.title }}</span>
+                <v-spacer />
+                <span class="font-weight-bold">{{ status.quantidade }}</span>
+              </div>
+              <v-progress-linear :model-value="status.largura" :color="status.color" bg-color="surface-variant" bg-opacity="1" height="8" rounded :aria-label="`Ordens ${status.title}`" />
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+
   <div class="fx-titulo-secao mt-6 mb-3">Totais do período</div>
   <v-row>
     <v-col v-for="total in totais" :key="total.titulo" cols="12" sm="6" md="3">
@@ -179,3 +291,22 @@ onMounted(() => {
     </v-col>
   </v-row>
 </template>
+
+<style scoped>
+.grafico-pilha {
+  display: flex;
+  gap: 2px;
+  height: 24px;
+}
+
+.grafico-segmento {
+  min-width: 4px;
+  border-radius: 4px;
+}
+
+.grafico-marcador {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+</style>
