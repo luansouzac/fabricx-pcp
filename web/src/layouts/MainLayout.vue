@@ -12,6 +12,7 @@ const itensMenu = [
   { titulo: 'Recursos', icone: 'mdi-robot-industrial-outline', rota: '/recursos' },
   { titulo: 'Ordens de produção', icone: 'mdi-clipboard-text-outline', rota: '/ordens' },
   { titulo: 'Demanda prevista', icone: 'mdi-chart-timeline-variant', rota: '/demanda-prevista' },
+  { titulo: 'Capacidade', icone: 'mdi-gauge-full', rota: '/capacidade' },
 ]
 
 const auth = useAuthStore()
