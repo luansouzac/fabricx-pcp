@@ -24,11 +24,12 @@ builder.Services
     {
         opcoes.InvalidModelStateResponseFactory = contexto =>
         {
-            var mensagem = string.Join(" ", contexto.ModelState.Values
+            var erros = contexto.ModelState.Values
                 .SelectMany(v => v.Errors)
-                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Requisição inválida." : e.ErrorMessage));
+                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Requisição inválida." : e.ErrorMessage)
+                .ToList();
 
-            var resposta = WebResponse<object>.Failure(mensagem, StatusCodes.Status400BadRequest);
+            var resposta = WebResponse<object>.Failure(string.Join(" ", erros), StatusCodes.Status400BadRequest, erros);
             return new BadRequestObjectResult(resposta);
         };
     });

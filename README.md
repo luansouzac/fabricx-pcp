@@ -6,7 +6,7 @@ API de PCP (Planejamento e Controle da Produção) em C# / .NET 10, com Arquitet
 
 ## Sistema e tecnologias
 
-O FabricX controla produtos e estoque, estrutura de produto, ordens de produção, programação em recursos, apontamentos, indicadores de desempenho e planejamento de capacidade. Todas as funcionalidades saem por endpoints HTTP, protegidos por JWT. O aplicativo cliente (front-end Vue.js) é o trabalho de Web III e consome esta API em outro projeto. Até lá, o Swagger UI é a interface de uso.
+O FabricX controla produtos e estoque, estrutura de produto, ordens de produção, programação em recursos, apontamentos, indicadores de desempenho e planejamento de capacidade. Todas as funcionalidades saem por endpoints HTTP, protegidos por JWT. O aplicativo cliente é o front-end em Vue 3 + Vuetify da pasta `web/` (trabalho de Web III), que consome esta API com login, token JWT e tratamento das respostas padronizadas. O Swagger UI também serve para testar a API sem o front.
 
 | Tema | Tecnologia |
 |---|---|
@@ -16,6 +16,7 @@ O FabricX controla produtos e estoque, estrutura de produto, ordens de produçã
 | Autenticação | JWT (Bearer) com senhas em PBKDF2 |
 | Cache | `IMemoryCache` nas consultas de indicadores e capacidade |
 | Padronização das respostas | `WebResponse<T>` (o ResultWrapper do enunciado) |
+| Aplicativo cliente | Vue 3, Vuetify 3, Pinia e Vue Router, em `web/` |
 | Documentação da API | OpenAPI embutido + Swagger UI |
 | Testes e execução | xUnit (unidade e integração), Docker |
 
@@ -65,6 +66,18 @@ dotnet run --project src/FabricX.Api --launch-profile http
 A API sobe em `http://localhost:5168`. O OpenAPI fica em `http://localhost:5168/openapi/v1.json`.
 
 Use o perfil `http`. O perfil `https` exige o certificado de desenvolvimento (`dotnet dev-certs https --trust`).
+
+## Rodar o aplicativo (front-end)
+
+O aplicativo está em `web/` (Vue 3 + Vuetify). Com a API no ar em `http://localhost:5168`:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+O front sobe em `http://localhost:5173` e entra com os usuários do seed (veja [Autenticação](#autenticação-jwt)). A URL da API vem de `VITE_API_URL` (padrão `http://localhost:5168`; copie `web/.env.example` para `web/.env` para mudar). Requer Node.js 20 ou superior. Com Docker, o front já sobe junto, em `http://localhost:5173`.
 
 ## Banco de dados e seeder
 
@@ -146,21 +159,65 @@ Endpoints atuais. Todos exigem token, exceto `POST /api/auth/login`:
 | POST | `/api/integracoes/sgq/resultados` | Envia resultado de qualidade ao SGQ (implementação simulada) |
 | DELETE | `/api/produtos/{id}` | Inativa produto (Administrador) |
 
-Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode`.
+Todas as respostas seguem o formato `WebResponse<T>`: `data`, `message`, `isSuccess`, `statusCode` e `errors` (lista com os detalhes do erro; vazia no sucesso).
 
 Exemplo de sucesso (`GET /api/recursos/1`):
 
 ```json
 { "data": { "id": 1, "nome": "Torno CNC", "tipo": "Maquina", "capacidadeHorasDia": 8, "ativo": true },
-  "message": null, "isSuccess": true, "statusCode": 200 }
+  "message": null, "isSuccess": true, "statusCode": 200, "errors": [] }
+```
+
+Criar produto (`POST /api/produtos`, exige token):
+
+```bash
+curl -s -X POST http://localhost:5168/api/produtos \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"codigo":"PA-900","nome":"Garrafa térmica","tipo":"Acabado","unidadeMedida":"UN","estoqueAtual":0,"estoqueMinimo":20,"custoUnitario":12.5}'
+```
+
+```json
+{ "data": { "id": 27, "codigo": "PA-900", "nome": "Garrafa térmica", "descricao": null, "tipo": "Acabado", "unidadeMedida": "UN",
+            "estoqueAtual": 0, "estoqueMinimo": 20, "custoUnitario": 12.5, "ativo": true, "estoqueAbaixoDoMinimo": true },
+  "message": null, "isSuccess": true, "statusCode": 201, "errors": [] }
+```
+
+Criar ordem de produção (`POST /api/ordens-producao`). O número é gerado pela API:
+
+```bash
+curl -s -X POST http://localhost:5168/api/ordens-producao \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"produtoId":27,"quantidade":100,"prazoEntrega":"2026-12-30","prioridade":"Alta"}'
+```
+
+```json
+{ "data": { "id": 15, "numero": "OP-2026-0015", "produtoId": 27, "produtoCodigo": "PA-900", "produtoNome": "Garrafa térmica",
+            "quantidade": 100, "prazoEntrega": "2026-12-30", "prioridade": "Alta", "status": "Planejada",
+            "criadaEm": "2026-11-25T09:35:26-03:00", "concluidaEm": null },
+  "message": null, "isSuccess": true, "statusCode": 201, "errors": [] }
+```
+
+Regra de negócio violada (ordem sem saldo dos componentes), com o mesmo formato:
+
+```json
+{ "data": null, "message": "Estoque insuficiente de EP-003: disponível 0, necessário 600.", "isSuccess": false, "statusCode": 400,
+  "errors": ["Estoque insuficiente de EP-003: disponível 0, necessário 600."] }
 ```
 
 Exemplos de erro, no mesmo formato:
 
 ```json
-{ "data": null, "message": "Autenticação necessária: envie um token JWT válido no cabeçalho Authorization.", "isSuccess": false, "statusCode": 401 }
-{ "data": null, "message": "O perfil do usuário não permite esta operação.", "isSuccess": false, "statusCode": 403 }
-{ "data": null, "message": "Recurso 99 não encontrado.", "isSuccess": false, "statusCode": 404 }
+{ "data": null, "message": "Autenticação necessária: envie um token JWT válido no cabeçalho Authorization.", "isSuccess": false, "statusCode": 401, "errors": ["Autenticação necessária: envie um token JWT válido no cabeçalho Authorization."] }
+{ "data": null, "message": "O perfil do usuário não permite esta operação.", "isSuccess": false, "statusCode": 403, "errors": ["O perfil do usuário não permite esta operação."] }
+{ "data": null, "message": "Recurso 99 não encontrado.", "isSuccess": false, "statusCode": 404, "errors": ["Recurso 99 não encontrado."] }
+```
+
+Erro de validação com mais de um problema (`POST /api/recursos` com corpo vazio), com um item em `errors` para cada problema:
+
+```json
+{ "data": null, "message": "O nome é obrigatório. A capacidade deve ser maior que zero e de no máximo 24 horas por dia.",
+  "isSuccess": false, "statusCode": 400,
+  "errors": ["O nome é obrigatório.", "A capacidade deve ser maior que zero e de no máximo 24 horas por dia."] }
 ```
 
 | Status | Quando |

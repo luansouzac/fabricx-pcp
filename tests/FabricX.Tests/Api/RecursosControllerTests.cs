@@ -26,6 +26,16 @@ public class RecursosControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Post_VariosCamposInvalidos_ListaUmErroPorProblemaEmErrors()
+    {
+        var resposta = await _cliente.PostAsJsonAsync("/api/recursos", new { tipo = "Maquina", capacidadeHorasDia = 0 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        var corpo = await LerAsync(resposta);
+        Assert.Equal(2, corpo.GetProperty("errors").GetArrayLength());
+    }
+
+    [Fact]
     public async Task Post_DadosValidos_Retorna201ComWebResponse()
     {
         var resposta = await _cliente.PostAsJsonAsync("/api/recursos", new { nome = NomeUnico(), tipo = "Linha", capacidadeHorasDia = 8 });
