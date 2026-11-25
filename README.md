@@ -51,6 +51,27 @@ Se o build falhar com `unexpected EOF` no `dotnet restore`, é instabilidade de 
 
 Os testes (`dotnet test`) e o desenvolvimento no dia a dia continuam usando o SDK local.
 
+### Windows
+
+Os comandos `docker compose` funcionam igual no PowerShell, no CMD e no Git Bash. Antes de rodar:
+
+1. Abra o **Docker Desktop** e espere o status "Engine running" (ele precisa do WSL 2 habilitado; o próprio instalador oferece).
+2. Confirme que as portas `5168` (API) e `5173` (front) estão livres. Para ver quem usa uma porta: `netstat -ano | findstr :5173`.
+3. Não rode o front com `npm run dev` ao mesmo tempo que o Docker: o Vite trocaria para a porta `5174`, que a API do Docker bloqueia por CORS.
+
+Os exemplos de `curl` deste README usam sintaxe de bash. No PowerShell, `curl` é um apelido de `Invoke-WebRequest` e não aceita `-X`, `-H` nem `\` no fim da linha. O mesmo fluxo em PowerShell:
+
+```powershell
+$login = Invoke-RestMethod -Method Post -Uri http://localhost:5168/api/auth/login `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@fabricx.com","senha":"Admin@123"}'
+$token = $login.data.token
+
+Invoke-RestMethod -Uri http://localhost:5168/api/produtos -Headers @{ Authorization = "Bearer $token" }
+```
+
+O caminho que funciona igual em qualquer sistema é o Swagger UI em `http://localhost:5168/swagger`.
+
 ## CORS
 
 A origem do front vem de `Cors:Origens` (lista no `appsettings` ou variáveis `Cors__Origens__0`, `Cors__Origens__1`...). Em Development, sem nenhuma origem configurada, a API libera qualquer origem. Fora de Development, sem origem configurada, nenhuma origem é liberada.
@@ -77,7 +98,7 @@ npm install
 npm run dev
 ```
 
-O front sobe em `http://localhost:5173` e entra com os usuários do seed (veja [Autenticação](#autenticação-jwt)). A URL da API vem de `VITE_API_URL` (padrão `http://localhost:5168`; copie `web/.env.example` para `web/.env` para mudar). Requer Node.js 20 ou superior. Com Docker, o front já sobe junto, em `http://localhost:5173`.
+O front sobe em `http://localhost:5173` e entra com os usuários do seed (veja [Autenticação](#autenticação-jwt)). A URL da API vem de `VITE_API_URL` (padrão `http://localhost:5168`; copie `web/.env.example` para `web/.env` para mudar). Requer Node.js 20.19 ou superior (ou 22.12+); o Docker usa o Node 22. Com Docker, o front já sobe junto, em `http://localhost:5173`.
 
 ## Banco de dados e seeder
 
@@ -93,6 +114,8 @@ Para resetar o banco e recarregar o seed:
 rm src/FabricX.Api/fabricx.db
 dotnet run --project src/FabricX.Api --launch-profile http
 ```
+
+No PowerShell ou no CMD, troque a primeira linha por `Remove-Item src\FabricX.Api\fabricx.db` (PowerShell) ou `del src\FabricX.Api\fabricx.db` (CMD).
 
 Pare a API antes de apagar o arquivo.
 
