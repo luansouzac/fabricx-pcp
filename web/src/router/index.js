@@ -14,6 +14,7 @@ import DemandasView from '../views/DemandasView.vue'
 import DemandaFormView from '../views/DemandaFormView.vue'
 import CapacidadeView from '../views/CapacidadeView.vue'
 import IndicadoresView from '../views/IndicadoresView.vue'
+import CronogramaView from '../views/CronogramaView.vue'
 import UsuariosView from '../views/UsuariosView.vue'
 import UsuarioFormView from '../views/UsuarioFormView.vue'
 
@@ -75,6 +76,7 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar ordem' },
   },
+  { path: '/programacao', name: 'programacao', component: CronogramaView, meta: { titulo: 'Programação' } },
   { path: '/capacidade', name: 'capacidade', component: CapacidadeView, meta: { titulo: 'Capacidade' } },
   { path: '/indicadores', name: 'indicadores', component: IndicadoresView, meta: { titulo: 'Indicadores' } },
   { path: '/demanda-prevista', name: 'demandas', component: DemandasView, meta: { titulo: 'Demanda prevista' } },

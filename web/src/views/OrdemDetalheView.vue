@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmacaoDialog from '../components/ConfirmacaoDialog.vue'
+import ProgramacaoOrdem from '../components/ProgramacaoOrdem.vue'
 import { useOrdensStore } from '../stores/ordens'
 import { acaoDeAvanco, dataCurta, dataHora, infoDaPrioridade, infoDoStatus, podeCancelar } from '../utils/ordem'
 
@@ -33,6 +34,14 @@ onMounted(async () => {
     carregando.value = false
   }
 })
+
+async function atualizarOrdem() {
+  try {
+    ordem.value = await ordens.obter(props.id)
+  } catch {
+    // o toast de erro já foi exibido pelo cliente
+  }
+}
 
 async function avancar() {
   avancando.value = true
@@ -132,6 +141,8 @@ async function cancelar() {
       </v-card-actions>
     </template>
   </v-card>
+
+  <ProgramacaoOrdem v-if="ordem" :ordem="ordem" @alterado="atualizarOrdem" />
 
   <ConfirmacaoDialog
     v-model="confirmandoCancelamento"

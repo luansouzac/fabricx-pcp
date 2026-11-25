@@ -12,6 +12,7 @@ const itensBase = [
   { titulo: 'Recursos', icone: 'mdi-robot-industrial-outline', rota: '/recursos' },
   { titulo: 'Ordens de produção', icone: 'mdi-clipboard-text-outline', rota: '/ordens' },
   { titulo: 'Demanda prevista', icone: 'mdi-chart-timeline-variant', rota: '/demanda-prevista' },
+  { titulo: 'Programação', icone: 'mdi-calendar-clock-outline', rota: '/programacao' },
   { titulo: 'Capacidade', icone: 'mdi-gauge-full', rota: '/capacidade' },
   { titulo: 'Indicadores', icone: 'mdi-chart-line', rota: '/indicadores' },
 ]
