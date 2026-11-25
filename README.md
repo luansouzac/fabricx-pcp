@@ -4,6 +4,40 @@ API de PCP (Planejamento e Controle da Produção) em C# / .NET 10, com Arquitet
 
 **Integrantes:** Francisco Carlos de Assis Santos Junior, Luan Souza Cunha e Igor Rosa. **Disciplina:** Engenharia de Software (IF Sudeste MG, Prof. Paulo Dutra).
 
+## Início rápido
+
+Com o [Docker](https://www.docker.com/products/docker-desktop) aberto, na raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+| O que | Endereço |
+|---|---|
+| Swagger UI (testar a API) | http://localhost:5168/swagger |
+| Front-end | http://localhost:5173 |
+
+O banco já sobe criado e populado com o seed. Para entrar, use `admin@fabricx.com` / `Admin@123` (Administrador) ou `operador@fabricx.com` / `Operador@123` (Operador). Sem Docker, veja [Rodar a API sem Docker](#rodar-a-api-sem-docker) e [Rodar o aplicativo (front-end)](#rodar-o-aplicativo-front-end).
+
+## Onde está cada parte do trabalho
+
+| Entregável | Onde está |
+|---|---|
+| Script DDL (`.sql`) | [database/script.sql](database/script.sql) |
+| Dados de exemplo (seed) | [database/seed.sql](database/seed.sql), explicado em [Banco de dados e seeder](#banco-de-dados-e-seeder) |
+| DER (imagem, PDF e fonte do diagrama) | [docs/der/der.png](docs/der/der.png), [docs/der/der.pdf](docs/der/der.pdf), [docs/der/der.mmd](docs/der/der.mmd) |
+| Documentação do projeto (Processo Unificado) | [docs/processo-unificado/](docs/processo-unificado/01-iniciacao.md): iniciação, elaboração, construção e transição |
+| Entidades e relacionamentos | [docs/03-entidades-e-relacionamentos.md](docs/03-entidades-e-relacionamentos.md) |
+| Plano, arquitetura e decisões | [docs/02-plano.md](docs/02-plano.md) |
+| Conceitos da disciplina aplicados | [docs/conceitos/](docs/conceitos/README.md) |
+| Código da API (Arquitetura Limpa) | [src/](src/): `FabricX.Domain`, `FabricX.Application`, `FabricX.Infrastructure` e `FabricX.Api` |
+| Testes (xUnit) | [tests/FabricX.Tests](tests/FabricX.Tests), rodam com `dotnet test` |
+| Autenticação JWT | [Autenticação (JWT)](#autenticação-jwt) e [docs/conceitos/jwt-e-cache.md](docs/conceitos/jwt-e-cache.md) |
+| Cache | [Cache](#cache) |
+| Padronização das respostas (`WebResponse<T>`) | [Testar os endpoints](#testar-os-endpoints) e `src/FabricX.Api/Common/WebResponse.cs` |
+| Interface gráfica | Front-end Vue em [web/](web/) e Swagger UI |
+| Skills do Claude Code | [docs/04-skills.md](docs/04-skills.md) e `.claude/skills/` |
+
 ## Sistema e tecnologias
 
 O FabricX controla produtos e estoque, estrutura de produto, ordens de produção, programação em recursos, apontamentos, indicadores de desempenho e planejamento de capacidade. Todas as funcionalidades saem por endpoints HTTP, protegidos por JWT. O aplicativo cliente é o front-end em Vue 3 + Vuetify da pasta `web/` (trabalho de Web III), que consome esta API com login, token JWT e tratamento das respostas padronizadas. O Swagger UI também serve para testar a API sem o front.
@@ -102,7 +136,14 @@ O front sobe em `http://localhost:5173` e entra com os usuários do seed (veja [
 
 ## Banco de dados e seeder
 
-O banco é o arquivo `src/FabricX.Api/fabricx.db`, criado na primeira execução (está no `.gitignore`). Na primeira execução a API cria as tabelas com `database/script.sql`. Quando o ambiente é Development, ela também carrega os dados de exemplo de `database/seed.sql`.
+O banco é o arquivo `src/FabricX.Api/fabricx.db` (SQLite), criado na primeira execução e ignorado pelo git. Não é preciso instalar nem configurar banco.
+
+| Arquivo | Papel | Quando roda |
+|---|---|---|
+| `database/script.sql` | Cria todas as tabelas (DDL) | Na primeira execução, quando a tabela `produto` ainda não existe |
+| `database/seed.sql` | Carrega os dados de exemplo | Logo depois do script, só em ambiente Development |
+
+Os dois arquivos são copiados para a pasta de saída do projeto e lidos pelo `BancoInicializador` ao subir a API. Não há comando separado para o seeder: ele roda sozinho ao iniciar a API com o banco vazio, tanto com `dotnet run` quanto com Docker (que já usa Development). Em Production só o script roda, sem dados de exemplo.
 
 O seed só roda quando o banco é criado do zero. Ele traz 2 usuários de desenvolvimento (veja [Autenticação](#autenticação-jwt)), 11 produtos (três deles abaixo do estoque mínimo), estruturas de produto, 6 recursos, roteiros e movimentações iniciais. O exemplo da garrafa tem três níveis: tampinha e garrafa formam a garrafa d'água (`EP-003`, montadora, ciclo de 2 min para 10 unidades), e 6 garrafas d'água formam o kit (`PA-003`, linha de embalagem, 2 min por unidade).
 
@@ -118,6 +159,15 @@ dotnet run --project src/FabricX.Api --launch-profile http
 No PowerShell ou no CMD, troque a primeira linha por `Remove-Item src\FabricX.Api\fabricx.db` (PowerShell) ou `del src\FabricX.Api\fabricx.db` (CMD).
 
 Pare a API antes de apagar o arquivo.
+
+Com Docker, o banco fica no volume `fabricx-data`. Para resetar:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+Para só conferir o esquema ou os dados sem a API, abra o `fabricx.db` em qualquer cliente SQLite (DB Browser for SQLite, extensão do VS Code ou `sqlite3 src/FabricX.Api/fabricx.db`). O `script.sql` e o `seed.sql` também podem ser executados à mão num banco vazio.
 
 ## Testar os endpoints
 
