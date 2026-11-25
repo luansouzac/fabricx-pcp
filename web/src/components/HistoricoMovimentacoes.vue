@@ -54,6 +54,7 @@ watch(() => [props.produtoId, props.versao], carregar, { immediate: true })
         <v-chip
           :color="item.tipo === 'Entrada' ? 'success' : 'warning'"
           :prepend-icon="item.tipo === 'Entrada' ? 'mdi-arrow-down-bold' : 'mdi-arrow-up-bold'"
+          variant="flat"
           size="small"
         >
           {{ item.tipo === 'Entrada' ? 'Entrada' : 'Saída' }}

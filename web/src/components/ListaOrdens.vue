@@ -28,6 +28,13 @@ watch(statusSelecionado, (status) => ordens.carregar(status))
 </script>
 
 <template>
+  <v-alert v-if="ordens.falhou" type="error" variant="flat" density="compact" class="mb-4">
+    Não foi possível carregar as ordens.
+    <template #append>
+      <v-btn variant="text" size="small" @click="ordens.carregar(statusSelecionado)">Tentar novamente</v-btn>
+    </template>
+  </v-alert>
+
   <v-row>
     <v-col cols="12" md="6">
       <v-text-field

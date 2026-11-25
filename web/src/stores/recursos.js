@@ -5,13 +5,16 @@ import { api } from '../api/cliente'
 export const useRecursosStore = defineStore('recursos', () => {
   const itens = ref([])
   const carregando = ref(false)
+  const falhou = ref(false)
 
   async function carregar() {
     carregando.value = true
+    falhou.value = false
     try {
       itens.value = await api.get('/api/recursos')
     } catch {
       itens.value = []
+      falhou.value = true
     } finally {
       carregando.value = false
     }
@@ -26,5 +29,5 @@ export const useRecursosStore = defineStore('recursos', () => {
 
   const inativar = (id) => api.delete(`/api/recursos/${id}`, { mensagemSucesso: 'Recurso inativado com sucesso.' })
 
-  return { itens, carregando, carregar, obter, criar, atualizar, inativar }
+  return { itens, carregando, falhou, carregar, obter, criar, atualizar, inativar }
 })

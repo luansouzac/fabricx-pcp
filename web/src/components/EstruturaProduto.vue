@@ -175,7 +175,7 @@ onMounted(async () => {
           type="number"
           min="0"
           :suffix="itemEmEdicao?.unidadeMedida"
-          :error="!(Number(quantidadeEditada) > 0)"
+          :error-messages="Number(quantidadeEditada) > 0 ? [] : ['Informe uma quantidade maior que zero.']"
           autofocus
           @keyup.enter="salvarEdicao"
         />

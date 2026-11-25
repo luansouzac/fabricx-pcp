@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useNotificacoesStore } from '../stores/notificacoes'
 import LoginView from '../views/LoginView.vue'
 import InicioView from '../views/InicioView.vue'
 import ProdutosView from '../views/ProdutosView.vue'
@@ -35,6 +36,13 @@ const routes = [
     component: ProdutoDetalheView,
     props: (rota) => ({ id: rota.params.id, aba: 'estrutura' }),
     meta: { titulo: 'Estrutura do produto' },
+  },
+  {
+    path: '/produtos/:id(\\d+)/diagrama',
+    name: 'produto-diagrama',
+    component: ProdutoDetalheView,
+    props: (rota) => ({ id: rota.params.id, aba: 'diagrama' }),
+    meta: { titulo: 'Diagrama do produto' },
   },
   {
     path: '/produtos/:id(\\d+)/roteiro',
@@ -124,7 +132,10 @@ router.beforeEach((to) => {
     return { name: 'login', query: to.fullPath === '/' ? undefined : { redirect: to.fullPath } }
   }
   if (to.name === 'login' && auth.logado) return { name: 'inicio' }
-  if (to.meta.administrador && !auth.ehAdministrador) return { name: 'inicio' }
+  if (to.meta.administrador && !auth.ehAdministrador) {
+    useNotificacoesStore().erro('Você não tem permissão para acessar essa página.')
+    return { name: 'inicio' }
+  }
 })
 
 router.afterEach((to) => {

@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
   const ehAdministrador = computed(() => usuario.value?.perfil === 'Administrador')
 
   async function entrar(email, senha) {
-    const dados = await api.post('/api/auth/login', { email, senha }, { publica: true })
+    const dados = await api.post('/api/auth/login', { email, senha }, { publica: true, semToastDeErro: true })
     sessao.value = { token: dados.token, expiraEmUtc: dados.expiraEmUtc, usuario: dados.usuario }
     sessionStorage.setItem(CHAVE, JSON.stringify(sessao.value))
   }

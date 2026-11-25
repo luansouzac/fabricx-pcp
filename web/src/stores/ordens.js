@@ -5,17 +5,22 @@ import { api } from '../api/cliente'
 export const useOrdensStore = defineStore('ordens', () => {
   const itens = ref([])
   const carregando = ref(false)
+  const falhou = ref(false)
 
   let ultimaRequisicao = 0
 
   async function carregar(status) {
     const requisicao = ++ultimaRequisicao
     carregando.value = true
+    falhou.value = false
     try {
       const lista = await api.get(status ? `/api/ordens-producao?status=${status}` : '/api/ordens-producao')
       if (requisicao === ultimaRequisicao) itens.value = lista
     } catch {
-      if (requisicao === ultimaRequisicao) itens.value = []
+      if (requisicao === ultimaRequisicao) {
+        itens.value = []
+        falhou.value = true
+      }
     } finally {
       if (requisicao === ultimaRequisicao) carregando.value = false
     }
@@ -34,5 +39,5 @@ export const useOrdensStore = defineStore('ordens', () => {
   const cancelar = (id) =>
     api.post(`/api/ordens-producao/${id}/cancelar`, undefined, { mensagemSucesso: 'Ordem de produção cancelada.' })
 
-  return { itens, carregando, carregar, obter, criar, alterar, avancar, cancelar }
+  return { itens, carregando, falhou, carregar, obter, criar, alterar, avancar, cancelar }
 })

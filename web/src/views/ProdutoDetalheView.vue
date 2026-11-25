@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ConfirmacaoDialog from '../components/ConfirmacaoDialog.vue'
+import DiagramaEstrutura from '../components/DiagramaEstrutura.vue'
 import EstruturaProduto from '../components/EstruturaProduto.vue'
 import HistoricoMovimentacoes from '../components/HistoricoMovimentacoes.vue'
 import MovimentacaoDialog from '../components/MovimentacaoDialog.vue'
@@ -29,15 +30,20 @@ function aoMovimentar(produtoAtualizado) {
   versaoHistorico.value += 1
 }
 
-onMounted(async () => {
-  try {
-    produto.value = await produtos.obter(props.id)
-  } catch {
-    router.replace('/produtos')
-  } finally {
-    carregando.value = false
-  }
-})
+watch(
+  () => props.id,
+  async () => {
+    carregando.value = true
+    try {
+      produto.value = await produtos.obter(props.id)
+    } catch {
+      router.replace('/produtos')
+    } finally {
+      carregando.value = false
+    }
+  },
+  { immediate: true },
+)
 
 async function inativar() {
   inativando.value = true
@@ -62,7 +68,7 @@ async function inativar() {
     <template v-if="produto">
       <v-card-title class="d-flex align-center flex-wrap ga-2">
         {{ produto.nome }}
-        <v-chip :color="produto.ativo ? 'success' : 'grey'" size="small">{{ produto.ativo ? 'Ativo' : 'Inativo' }}</v-chip>
+        <v-chip :color="produto.ativo ? 'success' : 'grey'" variant="flat" size="small">{{ produto.ativo ? 'Ativo' : 'Inativo' }}</v-chip>
       </v-card-title>
       <v-card-subtitle>{{ produto.codigo }}</v-card-subtitle>
 
@@ -118,11 +124,13 @@ async function inativar() {
     <v-tabs class="mt-6" color="primary" density="comfortable">
       <v-tab :to="`/produtos/${id}`" exact :value="'movimentacoes'" class="text-none">Movimentações</v-tab>
       <v-tab :to="`/produtos/${id}/estrutura`" :value="'estrutura'" class="text-none">Estrutura</v-tab>
+      <v-tab :to="`/produtos/${id}/diagrama`" :value="'diagrama'" class="text-none">Diagrama</v-tab>
       <v-tab :to="`/produtos/${id}/roteiro`" :value="'roteiro'" class="text-none">Roteiro</v-tab>
     </v-tabs>
 
     <HistoricoMovimentacoes v-if="aba === 'movimentacoes'" :produto-id="id" :versao="versaoHistorico" class="mt-4" />
     <EstruturaProduto v-else-if="aba === 'estrutura'" :produto-id="id" />
+    <DiagramaEstrutura v-else-if="aba === 'diagrama'" :key="id" :produto="produto" />
     <RoteiroProduto v-else :produto-id="id" />
   </template>
 

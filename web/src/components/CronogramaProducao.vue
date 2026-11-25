@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import GanttCronograma from './GanttCronograma.vue'
 import { useProgramacaoStore } from '../stores/programacao'
 import { useRecursosStore } from '../stores/recursos'
 import { chaveDoDia, diaPorExtenso, horaCurta, statusDaProgramacao } from '../utils/programacao'
@@ -7,6 +8,7 @@ import { chaveDoDia, diaPorExtenso, horaCurta, statusDaProgramacao } from '../ut
 const programacao = useProgramacaoStore()
 const recursos = useRecursosStore()
 
+const visao = ref('gantt')
 const filtros = reactive({ recursoId: null, de: '', ate: '' })
 
 const opcoesDeRecurso = computed(() => recursos.itens.map((recurso) => ({ title: recurso.nome, value: recurso.id })))
@@ -52,6 +54,13 @@ onMounted(() => {
     </template>
   </v-alert>
 
+  <div class="d-flex justify-end mb-2">
+    <v-btn-toggle v-model="visao" mandatory density="compact" variant="outlined" color="primary" divided>
+      <v-btn value="gantt" prepend-icon="mdi-chart-gantt" class="text-none">Gantt</v-btn>
+      <v-btn value="lista" prepend-icon="mdi-format-list-bulleted" class="text-none">Lista</v-btn>
+    </v-btn-toggle>
+  </div>
+
   <v-row>
     <v-col cols="12" md="4">
       <v-autocomplete
@@ -88,23 +97,27 @@ onMounted(() => {
     Nenhuma etapa programada para os filtros escolhidos. Abra uma ordem na aba Ordens e use Programar etapa, ou mude o filtro.
   </div>
 
-  <v-card v-for="recurso in porRecurso" :key="recurso.id" class="mt-4" :title="recurso.nome">
-    <v-card-text>
-      <div v-for="dia in recurso.dias" :key="dia.chave" class="mb-4">
-        <div class="fx-legenda text-capitalize mb-2">{{ dia.titulo }}</div>
-        <v-list density="compact" class="pa-0">
-          <v-list-item v-for="item in dia.itens" :key="item.id" :to="`/ordens/${item.ordemId}`" rounded="lg">
-            <div class="d-flex align-center flex-wrap ga-3">
-              <span class="font-weight-bold">{{ horaCurta(item.inicioPrevisto) }} – {{ horaCurta(item.fimPrevisto) }}</span>
-              <span>{{ item.ordemNumero }} · {{ item.etapaNome }}</span>
-              <v-spacer />
-              <v-chip :color="statusDaProgramacao[item.status].color" variant="flat" size="small">
-                {{ statusDaProgramacao[item.status].title }}
-              </v-chip>
-            </div>
-          </v-list-item>
-        </v-list>
-      </div>
-    </v-card-text>
-  </v-card>
+  <GanttCronograma v-else-if="visao === 'gantt'" :itens="programacao.cronograma" />
+
+  <template v-else>
+    <v-card v-for="recurso in porRecurso" :key="recurso.id" class="mt-4" :title="recurso.nome">
+      <v-card-text>
+        <div v-for="dia in recurso.dias" :key="dia.chave" class="mb-4">
+          <div class="fx-legenda text-capitalize mb-2">{{ dia.titulo }}</div>
+          <v-list density="compact" class="pa-0">
+            <v-list-item v-for="item in dia.itens" :key="item.id" :to="`/ordens/${item.ordemId}`" rounded="lg">
+              <div class="d-flex align-center flex-wrap ga-3">
+                <span class="font-weight-bold">{{ horaCurta(item.inicioPrevisto) }} – {{ horaCurta(item.fimPrevisto) }}</span>
+                <span>{{ item.ordemNumero }} · {{ item.etapaNome }}</span>
+                <v-spacer />
+                <v-chip :color="statusDaProgramacao[item.status].color" variant="flat" size="small">
+                  {{ statusDaProgramacao[item.status].title }}
+                </v-chip>
+              </div>
+            </v-list-item>
+          </v-list>
+        </div>
+      </v-card-text>
+    </v-card>
+  </template>
 </template>

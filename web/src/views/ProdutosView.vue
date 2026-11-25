@@ -33,6 +33,13 @@ watch(tipoSelecionado, (tipo) => produtos.carregar(tipo))
     <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" to="/produtos/novo">Novo produto</v-btn>
   </div>
 
+  <v-alert v-if="produtos.falhou" type="error" variant="flat" density="compact" class="mb-4">
+    Não foi possível carregar os produtos.
+    <template #append>
+      <v-btn variant="text" size="small" @click="produtos.carregar(tipoSelecionado)">Tentar novamente</v-btn>
+    </template>
+  </v-alert>
+
   <v-row>
     <v-col cols="12" md="6">
       <v-text-field
@@ -71,7 +78,7 @@ watch(tipoSelecionado, (tipo) => produtos.carregar(tipo))
     </template>
     <template #item.custoUnitario="{ item }">{{ moeda.format(item.custoUnitario) }}</template>
     <template #item.ativo="{ item }">
-      <v-chip :color="item.ativo ? 'success' : 'grey'" size="small">{{ item.ativo ? 'Ativo' : 'Inativo' }}</v-chip>
+      <v-chip :color="item.ativo ? 'success' : 'grey'" variant="flat" size="small">{{ item.ativo ? 'Ativo' : 'Inativo' }}</v-chip>
     </template>
     <template #item.acoes="{ item }">
       <v-btn icon="mdi-eye-outline" variant="text" size="small" color="secondary" aria-label="Ver detalhes" :to="`/produtos/${item.id}`" title="Ver detalhes" />

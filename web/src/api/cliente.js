@@ -33,7 +33,7 @@ async function lerEnvelope(resposta) {
   }
 }
 
-async function requisitar(metodo, caminho, { corpo, mensagemSucesso, publica = false } = {}) {
+async function requisitar(metodo, caminho, { corpo, mensagemSucesso, publica = false, semToastDeErro = false } = {}) {
   const notificacoes = useNotificacoesStore()
   const auth = useAuthStore()
 
@@ -50,7 +50,7 @@ async function requisitar(metodo, caminho, { corpo, mensagemSucesso, publica = f
     })
   } catch {
     const erro = new ApiError('Não foi possível conectar à API. Verifique se ela está em execução.', 0)
-    notificacoes.erro(erro.message)
+    if (!semToastDeErro) notificacoes.erro(erro.message)
     throw erro
   }
 
@@ -66,7 +66,7 @@ async function requisitar(metodo, caminho, { corpo, mensagemSucesso, publica = f
 
   if (!envelope.isSuccess) {
     const erro = new ApiError(envelope.message ?? 'Erro desconhecido.', envelope.statusCode)
-    notificacoes.erro(erro.message)
+    if (!semToastDeErro) notificacoes.erro(erro.message)
     throw erro
   }
 
