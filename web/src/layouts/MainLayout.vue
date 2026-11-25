@@ -6,7 +6,7 @@ import { useAuthStore } from '../stores/auth'
 import logoClaro from '../assets/logo/fabricx-horizontal-claro.svg'
 import logoEscuro from '../assets/logo/fabricx-horizontal-escuro.svg'
 
-const itensMenu = [
+const itensBase = [
   { titulo: 'Início', icone: 'mdi-view-dashboard-outline', rota: '/' },
   { titulo: 'Produtos', icone: 'mdi-package-variant-closed', rota: '/produtos' },
   { titulo: 'Recursos', icone: 'mdi-robot-industrial-outline', rota: '/recursos' },
@@ -16,7 +16,10 @@ const itensMenu = [
   { titulo: 'Indicadores', icone: 'mdi-chart-line', rota: '/indicadores' },
 ]
 
+const itemUsuarios = { titulo: 'Usuários', icone: 'mdi-account-multiple-outline', rota: '/usuarios' }
+
 const auth = useAuthStore()
+const itensMenu = computed(() => (auth.ehAdministrador ? [...itensBase, itemUsuarios] : itensBase))
 const router = useRouter()
 const theme = useTheme()
 const escuro = computed(() => theme.current.value.dark)
