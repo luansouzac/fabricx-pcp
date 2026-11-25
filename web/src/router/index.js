@@ -13,6 +13,8 @@ import OrdemDetalheView from '../views/OrdemDetalheView.vue'
 import DemandasView from '../views/DemandasView.vue'
 import DemandaFormView from '../views/DemandaFormView.vue'
 import CapacidadeView from '../views/CapacidadeView.vue'
+import UsuariosView from '../views/UsuariosView.vue'
+import UsuarioFormView from '../views/UsuarioFormView.vue'
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView, meta: { titulo: 'Entrar', publica: true } },
@@ -87,6 +89,20 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar demanda prevista' },
   },
+  { path: '/usuarios', name: 'usuarios', component: UsuariosView, meta: { titulo: 'Usuários', administrador: true } },
+  {
+    path: '/usuarios/novo',
+    name: 'usuario-novo',
+    component: UsuarioFormView,
+    meta: { titulo: 'Novo usuário', administrador: true },
+  },
+  {
+    path: '/usuarios/:id(\\d+)/editar',
+    name: 'usuario-editar',
+    component: UsuarioFormView,
+    props: true,
+    meta: { titulo: 'Editar usuário', administrador: true },
+  },
 ]
 
 const router = createRouter({
@@ -102,6 +118,7 @@ router.beforeEach((to) => {
     return { name: 'login', query: to.fullPath === '/' ? undefined : { redirect: to.fullPath } }
   }
   if (to.name === 'login' && auth.logado) return { name: 'inicio' }
+  if (to.meta.administrador && !auth.ehAdministrador) return { name: 'inicio' }
 })
 
 router.afterEach((to) => {
