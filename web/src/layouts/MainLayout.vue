@@ -68,6 +68,21 @@ function sair() {
     <div class="d-flex justify-center px-4 pt-5 pb-6">
       <img :src="logo" alt="FabricX" height="32" />
     </div>
+    <div class="px-3 pb-3">
+      <v-btn
+        block
+        variant="outlined"
+        color="secondary"
+        class="text-none justify-start"
+        prepend-icon="mdi-magnify"
+        aria-label="Buscar"
+        @click="paletaAberta = true"
+      >
+        Buscar
+        <v-spacer />
+        <span class="atalho">{{ atalho }}</span>
+      </v-btn>
+    </div>
     <v-list v-model:opened="grupoAberto" nav density="comfortable" color="primary">
       <v-list-item
         v-for="item in itensPrincipais"
@@ -105,17 +120,6 @@ function sair() {
   <v-app-bar height="56">
     <v-app-bar-nav-icon v-if="!mdAndUp" color="secondary" aria-label="Abrir menu" @click="menuAberto = !menuAberto" />
     <v-spacer />
-    <v-btn
-      variant="outlined"
-      color="secondary"
-      class="text-none mr-4"
-      prepend-icon="mdi-magnify"
-      aria-label="Buscar"
-      @click="paletaAberta = true"
-    >
-      Buscar
-      <span class="atalho ml-3">{{ atalho }}</span>
-    </v-btn>
     <span class="fx-legenda mr-2">{{ auth.usuario?.nome }}</span>
     <v-btn
       :icon="escuro ? 'mdi-weather-sunny' : 'mdi-weather-night'"
