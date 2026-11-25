@@ -28,12 +28,6 @@ watch(statusSelecionado, (status) => ordens.carregar(status))
 </script>
 
 <template>
-  <div class="d-flex align-center mb-4">
-    <h1 class="fx-titulo-pagina">Ordens de produção</h1>
-    <v-spacer />
-    <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" to="/ordens/nova">Nova ordem</v-btn>
-  </div>
-
   <v-row>
     <v-col cols="12" md="6">
       <v-text-field
@@ -56,7 +50,7 @@ watch(statusSelecionado, (status) => ordens.carregar(status))
     :search="busca ?? ''"
     :custom-filter="filtrar"
     items-per-page-text="Itens por página"
-    no-data-text="Nenhuma ordem encontrada. Crie uma ordem ou mude o filtro."
+    no-data-text="Nenhuma ordem encontrada. Use Nova ordem ou mude o filtro."
     loading-text="Carregando ordens..."
     class="mt-4"
   >

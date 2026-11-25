@@ -5,11 +5,13 @@ import { useDemandasStore } from '../stores/demandas'
 import { useProdutosStore } from '../stores/produtos'
 import { formatarPeriodo, formatarQuantidade } from '../utils/demanda'
 
+const props = defineProps({ periodo: { type: String, default: '' } })
+const emit = defineEmits(['alterada'])
+
 const demandas = useDemandasStore()
 const produtos = useProdutosStore()
 
 const busca = ref('')
-const periodo = ref('')
 const demandaParaExcluir = ref(null)
 const confirmandoExclusao = ref(false)
 const excluindo = ref(false)
@@ -39,7 +41,8 @@ async function excluir() {
   try {
     await demandas.remover(demandaParaExcluir.value.id)
     confirmandoExclusao.value = false
-    await demandas.carregar(periodo.value)
+    await demandas.carregar(props.periodo)
+    emit('alterada')
   } catch {
     confirmandoExclusao.value = false
   } finally {
@@ -47,34 +50,34 @@ async function excluir() {
   }
 }
 
-watch(periodo, (valor) => demandas.carregar(valor))
+watch(() => props.periodo, (valor) => demandas.carregar(valor))
 
 onMounted(() => {
   produtos.carregar()
-  demandas.carregar(periodo.value)
+  demandas.carregar(props.periodo)
 })
 </script>
 
 <template>
-  <div class="d-flex align-center mb-4">
-    <h1 class="fx-titulo-pagina">Demanda prevista</h1>
+  <div class="d-flex align-center mb-2">
+    <div>
+      <h2 class="fx-titulo-secao">Demanda prevista</h2>
+      <div class="fx-legenda">O que se espera vender no mês. Alimenta o cálculo de capacidade.</div>
+    </div>
     <v-spacer />
-    <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" to="/demanda-prevista/nova">Nova demanda</v-btn>
+    <v-btn color="secondary" variant="outlined" prepend-icon="mdi-plus" to="/demanda-prevista/nova">Nova demanda</v-btn>
   </div>
 
   <v-alert v-if="demandas.falhou" type="error" variant="flat" density="compact" class="mb-4">
     Não foi possível carregar a demanda prevista.
     <template #append>
-      <v-btn variant="text" size="small" @click="demandas.carregar(periodo)">Tentar novamente</v-btn>
+      <v-btn variant="text" size="small" @click="demandas.carregar(props.periodo)">Tentar novamente</v-btn>
     </template>
   </v-alert>
 
   <v-row>
     <v-col cols="12" md="6">
       <v-text-field v-model="busca" label="Buscar por produto" prepend-inner-icon="mdi-magnify" clearable hide-details />
-    </v-col>
-    <v-col cols="12" md="3">
-      <v-text-field v-model="periodo" label="Período" type="month" clearable hide-details />
     </v-col>
   </v-row>
 
@@ -85,7 +88,7 @@ onMounted(() => {
     :search="busca ?? ''"
     :custom-filter="filtrar"
     items-per-page-text="Itens por página"
-    no-data-text="Nenhuma demanda encontrada. Crie uma demanda ou mude o filtro."
+    no-data-text="Nenhuma demanda para este mês. Use Nova demanda para informar quanto se espera vender."
     loading-text="Carregando demanda prevista..."
     class="mt-4"
   >
