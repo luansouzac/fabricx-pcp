@@ -13,6 +13,7 @@ const itensBase = [
   { titulo: 'Ordens de produção', icone: 'mdi-clipboard-text-outline', rota: '/ordens' },
   { titulo: 'Demanda prevista', icone: 'mdi-chart-timeline-variant', rota: '/demanda-prevista' },
   { titulo: 'Capacidade', icone: 'mdi-gauge-full', rota: '/capacidade' },
+  { titulo: 'Indicadores', icone: 'mdi-chart-line', rota: '/indicadores' },
 ]
 
 const itemUsuarios = { titulo: 'Usuários', icone: 'mdi-account-multiple-outline', rota: '/usuarios' }
