@@ -2,7 +2,7 @@
 
 API de PCP (Planejamento e Controle da Produção) em C# / .NET 10, com Arquitetura Limpa e banco SQLite. Documentação de domínio em `docs/`.
 
-**Integrantes:** Francisco, Luan e Igor. **Disciplina:** Engenharia de Software (IF Sudeste MG, Prof. Paulo Dutra).
+**Integrantes:** Francisco Carlos de Assis Santos Junior, Luan Souza Cunha e Igor Rosa. **Disciplina:** Engenharia de Software (IF Sudeste MG, Prof. Paulo Dutra).
 
 ## Sistema e tecnologias
 
