@@ -12,6 +12,7 @@ import OrdemFormView from '../views/OrdemFormView.vue'
 import OrdemDetalheView from '../views/OrdemDetalheView.vue'
 import DemandasView from '../views/DemandasView.vue'
 import DemandaFormView from '../views/DemandaFormView.vue'
+import CapacidadeView from '../views/CapacidadeView.vue'
 import UsuariosView from '../views/UsuariosView.vue'
 import UsuarioFormView from '../views/UsuarioFormView.vue'
 
@@ -73,6 +74,7 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar ordem' },
   },
+  { path: '/capacidade', name: 'capacidade', component: CapacidadeView, meta: { titulo: 'Capacidade' } },
   { path: '/demanda-prevista', name: 'demandas', component: DemandasView, meta: { titulo: 'Demanda prevista' } },
   {
     path: '/demanda-prevista/nova',
