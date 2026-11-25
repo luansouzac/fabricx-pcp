@@ -45,14 +45,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="d-flex align-center mb-4">
-    <h1 class="fx-titulo-pagina">Programação</h1>
-    <v-spacer />
-    <v-btn variant="outlined" color="secondary" prepend-icon="mdi-refresh" :loading="programacao.carregando" @click="recarregar">
-      Atualizar
-    </v-btn>
-  </div>
-
   <v-alert v-if="programacao.falhou" type="error" variant="flat" density="compact" class="mb-4">
     Não foi possível carregar o cronograma.
     <template #append>
@@ -93,7 +85,7 @@ onMounted(() => {
   <v-progress-linear v-if="programacao.carregando" indeterminate color="primary" class="mt-4" aria-label="Carregando cronograma" />
 
   <div v-else-if="!porRecurso.length && !programacao.falhou" class="text-center text-medium-emphasis py-8">
-    Nenhuma etapa programada para os filtros escolhidos. Programe etapas pelo detalhe de uma ordem ou mude o filtro.
+    Nenhuma etapa programada para os filtros escolhidos. Abra uma ordem na aba Ordens e use Programar etapa, ou mude o filtro.
   </div>
 
   <v-card v-for="recurso in porRecurso" :key="recurso.id" class="mt-4" :title="recurso.nome">

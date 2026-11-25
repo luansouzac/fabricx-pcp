@@ -15,7 +15,7 @@ import {
 } from '../utils/programacao'
 
 const props = defineProps({ ordem: { type: Object, required: true } })
-const emit = defineEmits(['alterado'])
+const emit = defineEmits(['alterado', 'resumo'])
 
 const programacao = useProgramacaoStore()
 const apontamentos = useApontamentosStore()
@@ -117,6 +117,11 @@ async function carregar() {
     ])
     itensProgramados.value = programadas
     itensApontados.value = apontadas
+    emit('resumo', {
+      etapasTotal: roteiro.value.length,
+      etapasProgramadas: programadas.length,
+      apontamentos: apontadas.length,
+    })
   } catch {
     itensProgramados.value = []
     itensApontados.value = []

@@ -1,12 +1,12 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useCapacidadeStore } from '../stores/capacidade'
 import { formatarPeriodo } from '../utils/demanda'
 
+const props = defineProps({ periodo: { type: String, required: true }, versao: { type: Number, default: 0 } })
+
 const capacidade = useCapacidadeStore()
 
-const hoje = new Date()
-const periodo = ref(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)
 
 const decimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
 
@@ -34,22 +34,26 @@ const linhas = computed(() =>
 
 const gargalos = computed(() => linhas.value.filter((recurso) => recurso.classificacao === 'Gargalo'))
 
-watch(periodo, (valor) => {
-  if (valor) capacidade.carregar(valor)
-})
+watch(
+  () => [props.periodo, props.versao],
+  () => {
+    if (props.periodo) capacidade.carregar(props.periodo)
+  },
+)
 
-onMounted(() => capacidade.carregar(periodo.value))
+onMounted(() => capacidade.carregar(props.periodo))
 </script>
 
 <template>
-  <div class="d-flex align-center mb-4">
-    <h1 class="fx-titulo-pagina">Capacidade</h1>
+  <div class="mb-2">
+    <h2 class="fx-titulo-secao">Capacidade dos recursos</h2>
+    <div class="fx-legenda">Quanto da capacidade de cada recurso a demanda e a programação do mês ocupam.</div>
   </div>
 
   <v-alert v-if="capacidade.falhou" type="error" variant="flat" density="compact" class="mb-4">
     Não foi possível carregar a capacidade.
     <template #append>
-      <v-btn variant="text" size="small" @click="capacidade.carregar(periodo)">Tentar novamente</v-btn>
+      <v-btn variant="text" size="small" @click="capacidade.carregar(props.periodo)">Tentar novamente</v-btn>
     </template>
   </v-alert>
 
@@ -63,12 +67,6 @@ onMounted(() => capacidade.carregar(periodo.value))
   >
     Gargalo em {{ formatarPeriodo(capacidade.dados.periodo) }}: {{ gargalos.map((recurso) => recurso.recursoNome).join(', ') }}.
   </v-alert>
-
-  <v-row>
-    <v-col cols="12" md="3">
-      <v-text-field v-model="periodo" label="Período" type="month" hide-details />
-    </v-col>
-  </v-row>
 
   <v-data-table
     :headers="colunas"

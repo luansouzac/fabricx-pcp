@@ -7,14 +7,13 @@ import ProdutoFormView from '../views/ProdutoFormView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import RecursosView from '../views/RecursosView.vue'
 import RecursoFormView from '../views/RecursoFormView.vue'
-import OrdensView from '../views/OrdensView.vue'
 import OrdemFormView from '../views/OrdemFormView.vue'
 import OrdemDetalheView from '../views/OrdemDetalheView.vue'
-import DemandasView from '../views/DemandasView.vue'
+import PlanejamentoView from '../views/PlanejamentoView.vue'
+import ProducaoView from '../views/ProducaoView.vue'
+import NaoEncontradoView from '../views/NaoEncontradoView.vue'
 import DemandaFormView from '../views/DemandaFormView.vue'
-import CapacidadeView from '../views/CapacidadeView.vue'
 import IndicadoresView from '../views/IndicadoresView.vue'
-import CronogramaView from '../views/CronogramaView.vue'
 import UsuariosView from '../views/UsuariosView.vue'
 import UsuarioFormView from '../views/UsuarioFormView.vue'
 
@@ -60,7 +59,8 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar recurso' },
   },
-  { path: '/ordens', name: 'ordens', component: OrdensView, meta: { titulo: 'Ordens de produção' } },
+  { path: '/producao', name: 'producao', component: ProducaoView, meta: { titulo: 'Produção' } },
+  { path: '/ordens', redirect: '/producao' },
   { path: '/ordens/nova', name: 'ordem-nova', component: OrdemFormView, meta: { titulo: 'Nova ordem' } },
   {
     path: '/ordens/:id(\\d+)',
@@ -76,10 +76,11 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar ordem' },
   },
-  { path: '/programacao', name: 'programacao', component: CronogramaView, meta: { titulo: 'Programação' } },
-  { path: '/capacidade', name: 'capacidade', component: CapacidadeView, meta: { titulo: 'Capacidade' } },
+  { path: '/programacao', redirect: { path: '/producao', query: { aba: 'cronograma' } } },
+  { path: '/planejamento', name: 'planejamento', component: PlanejamentoView, meta: { titulo: 'Planejamento' } },
+  { path: '/capacidade', redirect: '/planejamento' },
   { path: '/indicadores', name: 'indicadores', component: IndicadoresView, meta: { titulo: 'Indicadores' } },
-  { path: '/demanda-prevista', name: 'demandas', component: DemandasView, meta: { titulo: 'Demanda prevista' } },
+  { path: '/demanda-prevista', redirect: '/planejamento' },
   {
     path: '/demanda-prevista/nova',
     name: 'demanda-nova',
@@ -107,6 +108,7 @@ const routes = [
     props: true,
     meta: { titulo: 'Editar usuário', administrador: true },
   },
+  { path: '/:caminho(.*)*', name: 'nao-encontrado', component: NaoEncontradoView, meta: { titulo: 'Página não encontrada' } },
 ]
 
 const router = createRouter({

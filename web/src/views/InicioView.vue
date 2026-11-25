@@ -33,6 +33,41 @@ const classificacao = {
   Gargalo: { rotulo: 'Gargalo', cor: 'error' },
 }
 
+const hoje = new Date().toISOString().slice(0, 10)
+const statusAbertos = ['Planejada', 'Programada', 'EmProducao']
+
+const pontosDeAtencao = computed(() => {
+  const ordensAbertas = dashboard.ordens.filter((ordem) => statusAbertos.includes(ordem.status))
+  const atrasadas = ordensAbertas.filter((ordem) => ordem.prazoEntrega < hoje).length
+  const aguardando = dashboard.ordens.filter((ordem) => ordem.status === 'Planejada').length
+  const gargalos = (dashboard.capacidade?.recursos ?? []).filter((recurso) => recurso.classificacao === 'Gargalo')
+  const estoqueBaixo = dashboard.resumo?.produtosComEstoqueBaixo?.length ?? 0
+
+  const pontos = []
+  if (atrasadas) {
+    pontos.push({ icone: 'mdi-clock-alert-outline', cor: 'error', rota: '/producao', texto: `${atrasadas} ${atrasadas === 1 ? 'ordem passou' : 'ordens passaram'} do prazo de entrega.`, acao: 'Ver ordens' })
+  }
+  if (aguardando) {
+    pontos.push({ icone: 'mdi-calendar-plus', cor: 'info', rota: '/producao', texto: `${aguardando} ${aguardando === 1 ? 'ordem planejada aguarda' : 'ordens planejadas aguardam'} programação.`, acao: 'Programar' })
+  }
+  if (gargalos.length) {
+    pontos.push({ icone: 'mdi-alert-octagon-outline', cor: 'error', rota: '/planejamento', texto: `Gargalo no mês: ${gargalos.map((recurso) => recurso.recursoNome).join(', ')}.`, acao: 'Ver capacidade' })
+  }
+  if (estoqueBaixo) {
+    pontos.push({ icone: 'mdi-warehouse', cor: 'warning', rota: '/produtos', texto: `${estoqueBaixo} ${estoqueBaixo === 1 ? 'produto está abaixo' : 'produtos estão abaixo'} do estoque mínimo.`, acao: 'Ver produtos' })
+  }
+  return pontos
+})
+
+const etapasDoFluxo = [
+  { titulo: 'Produtos', texto: 'Cadastre produtos, estrutura (BOM) e roteiro.', rota: '/produtos', icone: 'mdi-package-variant-closed' },
+  { titulo: 'Recursos', texto: 'Cadastre máquinas, operadores e linhas.', rota: '/recursos', icone: 'mdi-robot-industrial-outline' },
+  { titulo: 'Planejamento', texto: 'Informe a demanda e veja a capacidade.', rota: '/planejamento', icone: 'mdi-chart-timeline-variant' },
+  { titulo: 'Produção', texto: 'Crie ordens e programe as etapas.', rota: '/producao', icone: 'mdi-clipboard-text-outline' },
+  { titulo: 'Apontamentos', texto: 'Registre o que foi produzido na ordem.', rota: '/producao', icone: 'mdi-clipboard-edit-outline' },
+  { titulo: 'Indicadores', texto: 'Acompanhe qualidade e eficiência.', rota: '/indicadores', icone: 'mdi-chart-line' },
+]
+
 const periodo = computed(() => {
   const [ano, mes] = (dashboard.capacidade?.periodo ?? '').split('-')
   return ano && mes ? `${mes}/${ano}` : ''
@@ -50,10 +85,44 @@ onMounted(() => dashboard.carregar())
     </v-btn>
   </div>
 
-  <div class="fx-titulo-secao mb-3">Ordens de produção</div>
+  <div class="fx-titulo-secao mb-3">O que fazer agora</div>
+  <v-card :loading="dashboard.carregando">
+    <v-list v-if="pontosDeAtencao.length" lines="one">
+      <v-list-item v-for="ponto in pontosDeAtencao" :key="ponto.texto" :to="ponto.rota">
+        <template #prepend>
+          <v-icon :icon="ponto.icone" :color="ponto.cor" />
+        </template>
+        <v-list-item-title class="text-wrap">{{ ponto.texto }}</v-list-item-title>
+        <template #append>
+          <span class="fx-legenda">{{ ponto.acao }}</span>
+        </template>
+      </v-list-item>
+    </v-list>
+    <v-card-text v-else-if="!dashboard.carregando" class="text-medium-emphasis">
+      Nada pendente agora. Siga o fluxo abaixo para planejar o próximo mês.
+    </v-card-text>
+  </v-card>
+
+  <div class="fx-titulo-secao mt-6 mb-3">Fluxo de trabalho</div>
+  <v-row>
+    <v-col v-for="(etapa, indice) in etapasDoFluxo" :key="etapa.titulo" cols="12" sm="6" md="4" lg="2">
+      <v-card :to="etapa.rota" class="h-100">
+        <v-card-text>
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-avatar size="24" color="secondary" class="text-caption">{{ indice + 1 }}</v-avatar>
+            <v-icon :icon="etapa.icone" color="secondary" size="20" />
+          </div>
+          <div class="font-weight-bold">{{ etapa.titulo }}</div>
+          <div class="fx-legenda mt-1">{{ etapa.texto }}</div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+
+  <div class="fx-titulo-secao mt-6 mb-3">Ordens de produção</div>
   <v-row>
     <v-col v-for="status in ordensPorStatus" :key="status.value" cols="6" md>
-      <v-card :loading="dashboard.carregando" :to="'/ordens'">
+      <v-card :loading="dashboard.carregando" :to="'/producao'">
         <v-card-text>
           <div class="fx-legenda">{{ status.title }}</div>
           <div class="text-h4 mt-1">{{ status.quantidade }}</div>

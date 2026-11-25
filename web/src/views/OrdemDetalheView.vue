@@ -17,6 +17,45 @@ const avancando = ref(false)
 const cancelando = ref(false)
 const confirmandoCancelamento = ref(false)
 
+const resumo = ref({ etapasTotal: 0, etapasProgramadas: 0, apontamentos: 0 })
+
+const passos = [
+  { title: 'Planejada', value: 'Planejada' },
+  { title: 'Programada', value: 'Programada' },
+  { title: 'Em produção', value: 'EmProducao' },
+  { title: 'Concluída', value: 'Concluida' },
+]
+
+const itensDoFluxo = passos.map((passo, indice) => ({ title: passo.title, value: indice + 1 }))
+
+const passoAtual = computed(() => passos.findIndex((passo) => passo.value === ordem.value?.status) + 1)
+
+const proximoPasso = computed(() => {
+  const atual = ordem.value
+  if (!atual) return null
+  const { etapasTotal, etapasProgramadas, apontamentos } = resumo.value
+  const faltam = etapasTotal - etapasProgramadas
+
+  if (atual.status === 'Cancelada') return { tipo: 'warning', texto: 'Ordem cancelada. Ela não pode mais ser programada nem apontada.' }
+  if (atual.status === 'Planejada' && etapasTotal === 0) {
+    return { tipo: 'warning', texto: 'O produto não tem roteiro. Cadastre as etapas em Produtos antes de programar.', link: { rota: `/produtos/${atual.produtoId}/roteiro`, rotulo: 'Abrir roteiro' } }
+  }
+  if (atual.status === 'Planejada' && faltam > 0) {
+    return { tipo: 'info', texto: `Programe ${faltam === 1 ? 'a etapa restante' : `as ${faltam} etapas restantes`} do roteiro. Com todas agendadas, a ordem passa para Programada.` }
+  }
+  if (atual.status === 'Planejada') return { tipo: 'info', texto: 'Todas as etapas estão agendadas. Use Programar para liberar a ordem.' }
+  if (atual.status === 'Programada') return { tipo: 'info', texto: 'Ordem programada. Inicie a produção para começar a registrar apontamentos.' }
+  if (atual.status === 'EmProducao') {
+    return {
+      tipo: 'info',
+      texto: apontamentos === 0
+        ? 'Em produção. Registre o primeiro apontamento em uma etapa da programação.'
+        : 'Em produção. Continue apontando as etapas e conclua a ordem quando terminar.',
+    }
+  }
+  return { tipo: 'success', texto: 'Ordem concluída. Veja o resultado em Indicadores.', link: { rota: '/indicadores', rotulo: 'Abrir indicadores' } }
+})
+
 const acaoAvanco = computed(() => (ordem.value ? acaoDeAvanco[ordem.value.status] : null))
 
 const mensagemDoAvanco = {
@@ -72,6 +111,24 @@ async function cancelar() {
     <v-btn icon="mdi-arrow-left" variant="text" color="secondary" to="/ordens" title="Voltar" aria-label="Voltar" class="mr-2" />
     <h1 class="fx-titulo-pagina">Detalhe da ordem</h1>
   </div>
+
+  <template v-if="ordem && ordem.status !== 'Cancelada'">
+    <v-stepper :model-value="passoAtual" :items="itensDoFluxo" hide-actions flat class="mb-4 fx-fluxo" />
+  </template>
+
+  <v-alert
+    v-if="proximoPasso"
+    :type="proximoPasso.tipo"
+    variant="flat"
+    density="compact"
+    class="mb-4"
+    :icon="proximoPasso.tipo === 'info' ? 'mdi-arrow-right-circle-outline' : undefined"
+  >
+    <strong>Próximo passo:</strong> {{ proximoPasso.texto }}
+    <template v-if="proximoPasso.link" #append>
+      <v-btn variant="text" size="small" :to="proximoPasso.link.rota">{{ proximoPasso.link.rotulo }}</v-btn>
+    </template>
+  </v-alert>
 
   <v-card :loading="carregando">
     <template v-if="ordem">
@@ -142,7 +199,7 @@ async function cancelar() {
     </template>
   </v-card>
 
-  <ProgramacaoOrdem v-if="ordem" :ordem="ordem" @alterado="atualizarOrdem" />
+  <ProgramacaoOrdem v-if="ordem" :ordem="ordem" @alterado="atualizarOrdem" @resumo="resumo = $event" />
 
   <ConfirmacaoDialog
     v-model="confirmandoCancelamento"
