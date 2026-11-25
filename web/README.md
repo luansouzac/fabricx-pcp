@@ -11,7 +11,7 @@ Front-end do FabricX em Vue 3, consumindo a API .NET. Trabalho de Desenvolviment
 
 ## Requisitos
 
-- Node.js 20 ou superior
+- Node.js 20.19 ou superior (ou 22.12+)
 - API do FabricX rodando (ver o README da raiz do repositório)
 
 ## Como rodar
