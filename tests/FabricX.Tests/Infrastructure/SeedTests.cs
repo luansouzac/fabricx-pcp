@@ -34,10 +34,25 @@ public class SeedTests : IDisposable
 
         await contexto.Database.ExecuteSqlRawAsync(LerSeed(), Ct);
 
-        Assert.Equal(11, await contexto.Produtos.CountAsync(Ct));
-        Assert.Equal(6, await contexto.Recursos.CountAsync(Ct));
-        Assert.Equal(2, await contexto.DemandasPrevistas.CountAsync(Ct));
-        Assert.Equal(2, await contexto.Database.SqlQuery<int>($"SELECT COUNT(*) AS Value FROM roteiro_etapa").SingleAsync(Ct));
+        Assert.Equal(26, await contexto.Produtos.CountAsync(Ct));
+        Assert.Equal(13, await contexto.Recursos.CountAsync(Ct));
+        Assert.Equal(16, await contexto.DemandasPrevistas.CountAsync(Ct));
+        Assert.Equal(14, await contexto.Database.SqlQuery<int>($"SELECT COUNT(*) AS Value FROM roteiro_etapa").SingleAsync(Ct));
+    }
+
+    [Fact]
+    public async Task Seed_ProgramacaoUsaORecursoDaEtapaECobreTodosOsStatusDeOrdem()
+    {
+        await using var contexto = _banco.CriarContexto();
+        await contexto.Database.ExecuteSqlRawAsync(LerSeed(), Ct);
+
+        var divergentes = await contexto.Database.SqlQuery<int>(
+            $"SELECT COUNT(*) AS Value FROM programacao p JOIN roteiro_etapa e ON e.id = p.etapa_id WHERE e.recurso_id <> p.recurso_id").SingleAsync(Ct);
+        var statusDistintos = await contexto.Database.SqlQuery<int>(
+            $"SELECT COUNT(DISTINCT status) AS Value FROM ordem_producao").SingleAsync(Ct);
+
+        Assert.Equal(0, divergentes);
+        Assert.Equal(5, statusDistintos);
     }
 
     [Fact]
