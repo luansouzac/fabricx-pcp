@@ -1,14 +1,17 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import CapacidadePeriodo from '../components/CapacidadePeriodo.vue'
 import DemandaPrevista from '../components/DemandaPrevista.vue'
 
 const hoje = new Date()
-const periodo = ref(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)
+const periodoAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+const periodoInformado = useRoute().query.periodo
+const periodo = ref(/^\d{4}-\d{2}$/.test(periodoInformado ?? '') ? periodoInformado : periodoAtual)
 const versao = ref(0)
 
 watch(periodo, (valor) => {
-  if (!valor) periodo.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+  if (!valor) periodo.value = periodoAtual
 })
 </script>
 

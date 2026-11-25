@@ -68,7 +68,7 @@ async function salvar() {
     } else {
       await demandas.criar({ ...dados, produtoId: formulario.produtoId })
     }
-    router.push('/demanda-prevista')
+    router.push({ path: '/planejamento', query: { periodo: formulario.periodo } })
   } catch {
     salvando.value = false
   }
