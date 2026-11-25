@@ -57,6 +57,13 @@ onMounted(() => recursos.carregar())
     <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" to="/recursos/novo">Novo recurso</v-btn>
   </div>
 
+  <v-alert v-if="recursos.falhou" type="error" variant="flat" density="compact" class="mb-4">
+    Não foi possível carregar os recursos.
+    <template #append>
+      <v-btn variant="text" size="small" @click="recursos.carregar()">Tentar novamente</v-btn>
+    </template>
+  </v-alert>
+
   <v-row>
     <v-col cols="12" md="6">
       <v-text-field v-model="busca" label="Buscar por nome" prepend-inner-icon="mdi-magnify" clearable hide-details />

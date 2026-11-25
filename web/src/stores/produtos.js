@@ -5,17 +5,22 @@ import { api } from '../api/cliente'
 export const useProdutosStore = defineStore('produtos', () => {
   const itens = ref([])
   const carregando = ref(false)
+  const falhou = ref(false)
 
   let ultimaRequisicao = 0
 
   async function carregar(tipo) {
     const requisicao = ++ultimaRequisicao
     carregando.value = true
+    falhou.value = false
     try {
       const lista = await api.get(tipo ? `/api/produtos?tipo=${tipo}` : '/api/produtos')
       if (requisicao === ultimaRequisicao) itens.value = lista
     } catch {
-      if (requisicao === ultimaRequisicao) itens.value = []
+      if (requisicao === ultimaRequisicao) {
+        itens.value = []
+        falhou.value = true
+      }
     } finally {
       if (requisicao === ultimaRequisicao) carregando.value = false
     }
@@ -58,7 +63,7 @@ export const useProdutosStore = defineStore('produtos', () => {
     api.delete(`/api/produtos/${id}/roteiro/${etapaId}`, { mensagemSucesso: 'Etapa removida com sucesso.' })
 
   return {
-    itens, carregando,
+    itens, carregando, falhou,
     carregar,
     obter,
     criar,

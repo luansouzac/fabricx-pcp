@@ -85,6 +85,13 @@ onMounted(() => dashboard.carregar())
     </v-btn>
   </div>
 
+  <v-alert v-if="dashboard.falhou" type="error" variant="flat" density="compact" class="mb-4">
+    Parte dos dados não pôde ser carregada. Os números abaixo podem estar incompletos.
+    <template #append>
+      <v-btn variant="text" size="small" @click="dashboard.carregar()">Tentar novamente</v-btn>
+    </template>
+  </v-alert>
+
   <div class="fx-titulo-secao mb-3">O que fazer agora</div>
   <v-card :loading="dashboard.carregando">
     <v-list v-if="pontosDeAtencao.length" lines="one">

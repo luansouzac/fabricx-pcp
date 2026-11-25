@@ -7,7 +7,6 @@ const props = defineProps({ periodo: { type: String, required: true }, versao: {
 
 const capacidade = useCapacidadeStore()
 
-
 const decimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
 
 const classificacao = {
