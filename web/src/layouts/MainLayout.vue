@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDisplay, useTheme } from 'vuetify'
 import { useRoute, useRouter } from 'vue-router'
+import PaletaComandos from '../components/PaletaComandos.vue'
 import { useAuthStore } from '../stores/auth'
 import logoClaro from '../assets/logo/fabricx-horizontal-claro.svg'
 import logoEscuro from '../assets/logo/fabricx-horizontal-escuro.svg'
@@ -41,6 +42,20 @@ function alternarTema() {
   theme.change(novo)
   localStorage.setItem('fx-tema', novo)
 }
+
+const paletaAberta = ref(false)
+const ehMac = /Mac|iPhone|iPad/.test(navigator.userAgentData?.platform ?? navigator.platform)
+const atalho = ehMac ? '⌘K' : 'Ctrl K'
+
+function aoTeclar(evento) {
+  if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
+    evento.preventDefault()
+    paletaAberta.value = !paletaAberta.value
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', aoTeclar))
+onBeforeUnmount(() => window.removeEventListener('keydown', aoTeclar))
 
 function sair() {
   auth.sair()
@@ -90,6 +105,17 @@ function sair() {
   <v-app-bar height="56">
     <v-app-bar-nav-icon v-if="!mdAndUp" color="secondary" aria-label="Abrir menu" @click="menuAberto = !menuAberto" />
     <v-spacer />
+    <v-btn
+      variant="outlined"
+      color="secondary"
+      class="text-none mr-4"
+      prepend-icon="mdi-magnify"
+      aria-label="Buscar"
+      @click="paletaAberta = true"
+    >
+      Buscar
+      <span class="atalho ml-3">{{ atalho }}</span>
+    </v-btn>
     <span class="fx-legenda mr-2">{{ auth.usuario?.nome }}</span>
     <v-btn
       :icon="escuro ? 'mdi-weather-sunny' : 'mdi-weather-night'"
@@ -109,9 +135,20 @@ function sair() {
     />
   </v-app-bar>
 
+  <PaletaComandos v-model="paletaAberta" @alternar-tema="alternarTema" />
+
   <v-main>
     <v-container fluid class="pa-4 pa-md-8">
       <router-view />
     </v-container>
   </v-main>
 </template>
+
+<style scoped>
+.atalho {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgb(var(--v-theme-surface-variant));
+  font-size: 11px;
+}
+</style>
